@@ -1,0 +1,22 @@
+{
+    "capacity": 25,
+    "room_type": "seminar room",
+    "equipment": [
+        "projector",
+        "whiteboard",
+        "video conferencing"
+    ],
+    "layout": [
+        "seminar"
+    ],
+    "use_cases": [
+        "meeting",
+        "discussion",
+        "hybrid meeting"
+    ],
+    "accessibility": [
+        "wheelchair accessible",
+        "accessible"
+    ],
+    "raw_description": "A medium-sized seminar room with capacity for around 25 people, equipped with a projector, whiteboard, and video conferencing system. Suitable for group discussions and hybrid meetings. Wheelchair accessible."
+}
