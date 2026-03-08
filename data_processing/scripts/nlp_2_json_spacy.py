@@ -103,7 +103,7 @@ ROOM_TYPE_RULES: list[tuple[str, list[str]]] = [
     ("lecture hall",    ["lecture hall", "auditorium", "lec hall"]),
     ("conference room", ["conference", "boardroom", "board room", "conf rm"]),
     ("seminar room",    ["seminar"]),
-    ("study room",      ["study room", "quiet study"]),
+    ("study room",      ["study room", "study space", "quiet study", "group study"]),
     ("classroom",       ["classroom"]),
     ("office",          ["office"]),
 ]
@@ -387,14 +387,20 @@ def parse_structured_row(row: dict) -> dict:
             else:
                 bool_equipment.append(equip_name)
 
-    text_cols = {"description", "notes", "details", "comments", "info", "remarks"}
+    # ── Explicit room_type column: trust it directly, bypass NLP inference ──
+    raw_room_type = str(_get("room_type", "type", "room_category") or "").strip()
+
+    # Columns whose values are always fed to NLP regardless of length
+    text_cols = {"description", "notes", "details", "comments", "info", "remarks",
+                 "room_type", "type", "room_category"}
     text_fragments = [
         str(v).strip() for k, v in row_lower.items()
         if k in text_cols and str(v).strip() not in ("", "nan", "None")
     ]
+    # Other long free-text values (threshold lowered to 4 chars to catch "Lab", "Hall", etc.)
     for k, v in row_lower.items():
         v_s = str(v).strip()
-        if k not in text_cols and len(v_s) > 10 and not re.fullmatch(r"[\d\.\-]+", v_s):
+        if k not in text_cols and len(v_s) > 4 and not re.fullmatch(r"[\d\.\-]+", v_s):
             text_fragments.append(v_s)
 
     text_blob = " ".join(text_fragments)
@@ -420,7 +426,10 @@ def parse_structured_row(row: dict) -> dict:
         "layout":          nlp_layout,
         "use_cases":       nlp_use_cases,
         "accessibility":   accessibility,
-        "room_type":       _infer_room_type(text_blob) if text_blob else "general purpose room",
+        # Priority: explicit column → NLP inference on text blob → fallback
+        "room_type":       _infer_room_type(raw_room_type) if raw_room_type
+                           else (_infer_room_type(text_blob) if text_blob
+                           else "general purpose room"),
         "raw_description": row,
     }
 
