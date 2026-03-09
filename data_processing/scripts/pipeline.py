@@ -23,7 +23,12 @@ from datetime import datetime
 from pathlib import Path
 import argparse
 
-from data_processing.scripts.nlp_2_json_spacy import RoomParser
+try:
+    from .db_manager import DBManager
+    from .nlp_2_json_spacy import RoomParser
+except ImportError:
+    from db_manager import DBManager
+    from nlp_2_json_spacy import RoomParser
 
 
 # =====================================================
@@ -104,7 +109,7 @@ def process_rooms(room_input):
 # Pipeline
 # =====================================================
 
-def run_pipeline(room_input=None, reservation_input=None, output="dataset.json"):
+def run_pipeline(room_input=None, reservation_input=None, output="dataset.json", save_to_db=False, db_password=None):
 
     dataset = {}
 
@@ -118,8 +123,26 @@ def run_pipeline(room_input=None, reservation_input=None, output="dataset.json")
         dataset["reservations"] = process_reservations(reservation_input)
         print(f"Processed {len(dataset['reservations'])} reservations")
 
+    # 存储为json文件
     with open(output, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=4)
+    
+    # 存入MySQL数据库
+    if save_to_db:
+        if not db_password:
+            print("Error: MySQL password is required when save_to_db is True.")
+            return
+
+        db = DBManager(password=db_password) 
+        
+        if "rooms" in dataset:
+            db.save_rooms(dataset["rooms"])
+        
+        if "reservations" in dataset:
+            # 只有房间存在时，存预约才有意义（因为有外键约束）
+            db.save_reservations(dataset["reservations"])
+            
+        db.close()
 
     print(f"Pipeline completed → {output}")
 
@@ -148,10 +171,24 @@ if __name__ == "__main__":
         help="Output JSON file"
     )
 
+    parser.add_argument(
+        "--save-to-db",
+        action="store_true",
+        help="Save data to MySQL database"
+    )
+
+    parser.add_argument(
+        "--db-password",
+        default="Weeder123456",
+        help="MySQL root password"
+    )
+
     args = parser.parse_args()
 
     run_pipeline(
         room_input=args.rooms,
         reservation_input=args.reservations,
-        output=args.output
+        output=args.output,
+        save_to_db=args.save_to_db,
+        db_password=args.db_password
     )
