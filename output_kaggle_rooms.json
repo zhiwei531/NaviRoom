@@ -1,0 +1,648 @@
+{
+    "rooms": [
+        {
+            "room_id": "004",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "004",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "005",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "005",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "006",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "006",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "007",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "007",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "008",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "008",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "009",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "009",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "010",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "010",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "011",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "011",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "012",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "012",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "013",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "013",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "032",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "032",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "033",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "033",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "034",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "034",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "035",
+            "floor": null,
+            "capacity": 10,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "035",
+                "Capacity": 10.0
+            }
+        },
+        {
+            "room_id": "102H",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "102H",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "103",
+            "floor": null,
+            "capacity": 0,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "103",
+                "Capacity": 0.0
+            }
+        },
+        {
+            "room_id": "104",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "104",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "105",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "105",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "106",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "106",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "107",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "107",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "108",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "108",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "109",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "109",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "129",
+            "floor": null,
+            "capacity": 60,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "129",
+                "Capacity": 60.0
+            }
+        },
+        {
+            "room_id": "131",
+            "floor": null,
+            "capacity": 16,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "131",
+                "Capacity": 16.0
+            }
+        },
+        {
+            "room_id": "132",
+            "floor": null,
+            "capacity": 16,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "132",
+                "Capacity": 16.0
+            }
+        },
+        {
+            "room_id": "133",
+            "floor": null,
+            "capacity": 30,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "133",
+                "Capacity": 30.0
+            }
+        },
+        {
+            "room_id": "134",
+            "floor": null,
+            "capacity": 20,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "134",
+                "Capacity": 20.0
+            }
+        },
+        {
+            "room_id": "141",
+            "floor": null,
+            "capacity": 12,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "141",
+                "Capacity": 12.0
+            }
+        },
+        {
+            "room_id": "203",
+            "floor": null,
+            "capacity": 30,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "203",
+                "Capacity": 30.0
+            }
+        },
+        {
+            "room_id": "205",
+            "floor": null,
+            "capacity": 78,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "205",
+                "Capacity": 78.0
+            }
+        },
+        {
+            "room_id": "206",
+            "floor": null,
+            "capacity": 21,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "206",
+                "Capacity": 21.0
+            }
+        },
+        {
+            "room_id": "209",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "209",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "210",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "210",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "216",
+            "floor": null,
+            "capacity": null,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "216",
+                "Capacity": NaN
+            }
+        },
+        {
+            "room_id": "227F",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "227F",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "234",
+            "floor": null,
+            "capacity": 16,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "234",
+                "Capacity": 16.0
+            }
+        },
+        {
+            "room_id": "303",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "303",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "304",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "304",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "316",
+            "floor": null,
+            "capacity": 100,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "316",
+                "Capacity": 100.0
+            }
+        },
+        {
+            "room_id": "327",
+            "floor": null,
+            "capacity": 32,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "327",
+                "Capacity": 32.0
+            }
+        },
+        {
+            "room_id": "330C",
+            "floor": null,
+            "capacity": null,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "330C",
+                "Capacity": NaN
+            }
+        },
+        {
+            "room_id": "330D",
+            "floor": null,
+            "capacity": null,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "330D",
+                "Capacity": NaN
+            }
+        },
+        {
+            "room_id": "324",
+            "floor": null,
+            "capacity": 6,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "324",
+                "Capacity": 6.0
+            }
+        },
+        {
+            "room_id": "325",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "325",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "326",
+            "floor": null,
+            "capacity": 8,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "326",
+                "Capacity": 8.0
+            }
+        },
+        {
+            "room_id": "ARCADE",
+            "floor": null,
+            "capacity": null,
+            "equipment": [],
+            "layout": [],
+            "use_cases": [],
+            "accessibility": [],
+            "room_type": "general purpose room",
+            "raw_description": {
+                "room_id": "Arcade",
+                "Capacity": NaN
+            }
+        }
+    ]
+}
