@@ -23,25 +23,88 @@ from datetime import datetime
 from pathlib import Path
 import argparse
 
-try:
-    from .db_manager import DBManager
-    from .nlp_2_json_spacy import RoomParser
-except ImportError:
-    from db_manager import DBManager
-    from nlp_2_json_spacy import RoomParser
 
+
+# =====================================================
+# Room Parsing
+# =====================================================
+
+def process_rooms(room_input):
+    # Lazy import so running reservations-only doesn't require spaCy model.
+    try:
+        from .nlp_2_json_spacy import RoomParser
+    except ImportError:
+        from nlp_2_json_spacy import RoomParser
+
+    parser = RoomParser()
+    rooms = parser.parse(room_input)
+    return rooms
 
 # =====================================================
 # Reservation Cleaning
 # =====================================================
 
 def load_reservations(path):
+    p = Path(path)
+    suffix = p.suffix.lower()
+
+    # Support both CSV (original kaggle pipeline) and JSON (DKU mapped output)
+    if suffix == ".json":
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            raise ValueError("Reservation JSON must be a list of objects")
+        return data
+
+    # Default: CSV
     with open(path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         return list(reader)
 
 
 def normalize_reservation(row):
+    # If the input is already in normalized JSON form, just validate/standardize keys.
+    # Expected keys (example):
+    # room_id, start_time, end_time, duration_minutes, status, request_date, description, ...
+    if isinstance(row, dict) and ("start_time" in row or "end_time" in row) and "room_id" in row:
+        room_id = row.get("room_id")
+        start_time = row.get("start_time")
+        end_time = row.get("end_time")
+        duration_minutes = row.get("duration_minutes")
+
+        if not room_id or not start_time or not end_time:
+            return None
+
+        # duration_minutes may be missing or non-int; keep best-effort int conversion
+        try:
+            duration_val = int(duration_minutes) if duration_minutes is not None else None
+        except Exception:
+            duration_val = None
+
+        out = {
+            "room_id": room_id,
+            "start_time": start_time,
+            "end_time": end_time,
+            "status": row.get("status", "completed"),
+        }
+        if duration_val is not None:
+            out["duration_minutes"] = duration_val
+
+        # Preserve optional fields if present
+        for k in [
+            "request_date",
+            "description",
+            "floor",
+            "capacity",
+            "has_screen",
+            "has_whiteboard",
+            "room_type",
+        ]:
+            if k in row and row[k] is not None:
+                out[k] = row[k]
+
+        return out
+
 
     time_formats = [
         "%Y-%m-%d %H:%M:%S",
@@ -92,17 +155,6 @@ def process_reservations(path):
     return [r for r in cleaned if r is not None]
 
 
-# =====================================================
-# Room Parsing
-# =====================================================
-
-def process_rooms(room_input):
-
-    parser = RoomParser()
-
-    rooms = parser.parse(room_input)
-
-    return rooms
 
 
 # =====================================================
@@ -132,17 +184,22 @@ def run_pipeline(room_input=None, reservation_input=None, output="dataset.json",
         if not db_password:
             print("Error: MySQL password is required when save_to_db is True.")
             return
+        # Lazy import so non-DB runs don't require mysql connector installed.
+        try:
+            from .db_manager import DBManager
+        except ImportError:
+            from db_manager import DBManager
 
-        db = DBManager(password=db_password) 
-        
+        db = DBManager(password=db_password)
+
         if "rooms" in dataset:
             db.save_rooms(dataset["rooms"])
-        
+
         if "reservations" in dataset:
-            # 只有房间存在时，存预约才有意义（因为有外键约束）
             db.save_reservations(dataset["reservations"])
-            
+
         db.close()
+        
 
     print(f"Pipeline completed → {output}")
 
@@ -162,7 +219,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--reservations",
-        help="Reservation csv file"
+        help="Reservation file"
     )
 
     parser.add_argument(
