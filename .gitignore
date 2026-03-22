@@ -27,6 +27,7 @@ frontend/pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+.env
 
 # --- Misc ---
 *.swp
