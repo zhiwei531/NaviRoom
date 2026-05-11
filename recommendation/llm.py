@@ -25,21 +25,48 @@ def _client(cfg: LLMConfig) -> OpenAI:
     return OpenAI(api_key=api_key, base_url=cfg.base_url)
 
 
-def llm_score_relevance(
-    *,
-    user_query: str,
-    room_features: dict[str, Any],
-    cfg: Optional[LLMConfig] = None,
-) -> tuple[float, list[str]]:
-    """Ask the LLM to output ONLY a numeric relevance score in [0,1] + short reasons.
+def _extract_json_payload(content: str) -> dict[str, Any]:
+    content = (content or "").strip()
+    if not content:
+        return {}
 
-    The caller must ensure reasons do not claim room attributes not present in room_features.
-    We enforce this by requesting reasons as a list of quoted strings that must reference only keys/values.
-    """
+    candidates = [content]
+    if "```json" in content:
+        for part in content.split("```json"):
+            if "```" in part:
+                candidates.append(part.split("```", 1)[0].strip())
+    if "```" in content:
+        for part in content.split("```"):
+            stripped = part.strip()
+            if stripped.startswith("{") and stripped.endswith("}"):
+                candidates.append(stripped)
 
+    start = content.find("{")
+    end = content.rfind("}")
+    if 0 <= start < end:
+        candidates.append(content[start : end + 1])
+
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            continue
+    return {}
+
+
+def clamp_score(score: float) -> float:
+    if score < 0.0:
+        score = 0.0
+    if score > 1.0:
+        score = 1.0
+    return score
+
+
+def llm_score_relevance(*, user_query: str, room_features: dict[str, Any], cfg: Optional[LLMConfig] = None) -> tuple[float, list[str]]:
     cfg = cfg or LLMConfig()
 
-    # Keep payload small and deterministic.
     allowed = {
         "room_id": room_features.get("room_id"),
         "room_type": room_features.get("room_type"),
@@ -49,6 +76,7 @@ def llm_score_relevance(
         "use_cases": room_features.get("use_cases"),
         "accessibility": room_features.get("accessibility"),
         "raw_description": room_features.get("raw_description"),
+        "description": room_features.get("description"),
     }
 
     prompt = (
@@ -63,42 +91,25 @@ def llm_score_relevance(
     )
 
     client = _client(cfg)
-
     resp = client.chat.completions.create(
         model=cfg.chat_model,
         messages=[{"role": "user", "content": prompt}],
     )
-
     content = resp.choices[0].message.content or ""
 
-    # Try strict JSON parse; if fails, fallback to 0 with a reason.
-    try:
-        data = json.loads(content)
-        score = float(data.get("score", 0.0))
-        reasons = data.get("reasons", [])
-        if not isinstance(reasons, list):
-            reasons = []
-        reasons = [str(x) for x in reasons][:4]
-        if score < 0.0:
-            score = 0.0
-        if score > 1.0:
-            score = 1.0
-        return score, reasons
-    except Exception:
+    data = _extract_json_payload(content)
+    if not data:
         return 0.0, ["llm score parse failed"]
 
+    score = clamp_score(float(data.get("score", 0.0)))
+    reasons = data.get("reasons", [])
+    if not isinstance(reasons, list):
+        reasons = []
+    reasons = [str(x) for x in reasons][:4]
+    return score, reasons
 
-def llm_extract_requirements(
-    *,
-    user_query: str,
-    cfg: Optional[LLMConfig] = None,
-) -> dict[str, Any]:
-    """Extract structured requirements from query.
 
-    Output JSON keys are LIMITED to: capacity, time_slot, duration, preferences, room_type, equipment.
-    Missing values should be omitted.
-    """
-
+def llm_extract_requirements(*, user_query: str, cfg: Optional[LLMConfig] = None) -> dict[str, Any]:
     cfg = cfg or LLMConfig()
     client = _client(cfg)
 
@@ -116,8 +127,5 @@ def llm_extract_requirements(
     )
 
     content = resp.choices[0].message.content or "{}"
-    try:
-        data = json.loads(content)
-        return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
+    data = _extract_json_payload(content)
+    return data if isinstance(data, dict) else {}

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Iterable, Optional
+
+
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 def parse_iso_dt(value: str) -> datetime:
@@ -20,10 +24,30 @@ def to_time_slot(dt: datetime) -> str:
     return "night"
 
 
+def normalize_text(value: object) -> str:
+    text = str(value or "").strip().lower()
+    text = text.replace("_", " ").replace("-", " ").replace("/", " ")
+    return " ".join(text.split())
+
+
+def tokenize_text(value: object) -> list[str]:
+    text = normalize_text(value)
+    if not text:
+        return []
+    return _TOKEN_RE.findall(text)
+
+
 def normalize_list(values: Optional[Iterable[str]]) -> list[str]:
     if not values:
         return []
-    return [str(v).strip().lower() for v in values if str(v).strip()]
+    out: list[str] = []
+    seen: set[str] = set()
+    for v in values:
+        text = normalize_text(v)
+        if text and text not in seen:
+            out.append(text)
+            seen.add(text)
+    return out
 
 
 def clamp01(x: float) -> float:
