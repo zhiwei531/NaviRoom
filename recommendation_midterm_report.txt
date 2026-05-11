@@ -1,0 +1,212 @@
+NaviRoom Recommendation Module Midterm Status Summary
+
+1. Module goal
+The recommendation module is designed to support cold-start room suggestion for NaviRoom under heterogeneous room metadata conditions. Its current target is to recommend suitable rooms even when a newly uploaded dataset has limited or no rich historical behavior available, while still using historical reservations when they exist.
+
+2. Current recommendation pipeline
+The module currently follows a six-part pipeline:
+
+1) Hard constraint filtering
+- Filters candidate rooms by capacity.
+- Filters by room type using canonical room_type plus aliases recovered from raw metadata.
+- Filters by required equipment.
+- Filters by availability when a concrete booking window is provided.
+
+2) Room-profile enrichment
+- Merges room-side metadata with reservation-side text.
+- Recovers latent room semantics from raw_description and historical reservation descriptions.
+- Infers room aliases such as Multi-Media Booth even when the canonical room_type is generic.
+- Derives use-case descriptors such as online meeting, video practice, quiet study, and online interview.
+
+3) Local semantic recall
+- Expands query semantics using hand-built aliases and normalized lexical forms.
+- Handles cases such as monitor -> screen, video practice -> booth, private/quiet -> study room.
+- Produces a local semantic score even if LLM services are unavailable.
+
+4) Optional Top-K LLM reranking
+- Uses DeepSeek-compatible LLM scoring for the strongest candidates only.
+- LLM calls are limited by RECO_LLM_TOP_K to control latency and API cost.
+- Keeps a bounded reranking step instead of scoring every room through the LLM.
+
+5) Recency-weighted behavior scoring
+- Uses historical reservation behavior when present.
+- Applies temporal decay so recent reservations matter more than stale history.
+- Computes popularity, preferred time-slot alignment, and duration similarity using recency weighting.
+
+6) Final ranking
+- Combines semantic score, rule satisfaction score, and behavior score.
+- Uses cold-start-friendly weighting so recommendation quality does not collapse when history is sparse.
+
+3. Major improvements completed since the initial version
+
+A. Zero-shot semantic recommendation
+Problem in earlier version:
+- The previous implementation relied too heavily on lexical overlap and basic historical behavior.
+- It did not satisfy the proposal requirement for meaningful zero-shot recommendation.
+
+What was added:
+- Semantic alias handling.
+- Room-type recovery from raw_description.
+- Derived room use cases from metadata and reservation-side text.
+- Hybrid semantic path with local recall plus optional LLM reranking.
+
+Effect:
+- Queries such as "Need a multimedia booth for video practice" now rank M-series booth rooms at the top instead of generic study rooms.
+- Queries such as "Need a place for an online interview with a monitor" now map monitor to screen and surface booth/screen rooms appropriately.
+
+B. Availability-aware filtering
+Problem in earlier version:
+- Recommendation only modeled suitability, not whether a room was actually available at the requested time.
+
+What was added:
+- requested_start and requested_end fields in recommendation requirements.
+- Automatic derivation of time_slot and duration from a provided booking window.
+- Reservation overlap checks to exclude rooms with conflicting reservations.
+
+Effect:
+- Recommendation now supports scheduling-aware filtering for concrete booking requests.
+- Rooms with overlapping confirmed reservations are removed before ranking.
+
+C. Recency-weighted behavior modeling
+Problem in earlier version:
+- Historical behavior treated old reservations and recent reservations equally.
+- This did not align with the proposal's temporal weighting direction.
+
+What was added:
+- Half-life-based temporal decay over reservation history.
+- Recent usage influences popularity, time-slot preference, and duration preference more strongly.
+- Configurable decay through RECO_RECENCY_HALF_LIFE_DAYS.
+
+Effect:
+- More realistic modeling of current demand patterns.
+- Better alignment with near-term usage behavior and seasonal / recent preference shifts.
+
+D. Bounded LLM reranking for deployment practicality
+Problem in earlier version:
+- Hybrid semantic scoring could trigger excessive LLM calls.
+- This created unstable latency and deployment cost.
+
+What was added:
+- Local semantic prescoring for all candidates.
+- LLM reranking only for a bounded shortlist.
+- RECO_LLM_TOP_K environment variable to cap reranked candidates.
+
+Effect:
+- Preserves semantic quality improvements from the LLM.
+- Makes the recommendation path much more realistic for deployed use.
+
+4. Current integration surface
+
+Python entry points:
+- recommendation.api.recommend_from_dataset_json(...)
+- recommendation.api.recommend_rooms_payload(...)
+
+Recommended backend route contract:
+- POST /api/recommendations
+
+Recommended request structure:
+- user_query
+- requirements.capacity
+- requirements.room_type
+- requirements.equipment
+- requirements.preferences
+- requirements.time_slot
+- requirements.duration
+- requirements.requested_start
+- requirements.requested_end
+- rooms
+- reservations
+
+Current frontend/backed integration status:
+- The recommendation engine is ready for backend wrapping.
+- The frontend prototype is not yet fully wired to this recommendation endpoint.
+- The repository README and recommendation README now document the intended request and response contracts.
+
+5. Validation completed so far
+
+The current server environment does not include pytest, so validation has been done through:
+- python -m py_compile recommendation/*.py
+- manual regression assertions
+- synthetic availability tests
+- synthetic recency-weighting tests
+- synthetic Top-K LLM reranking tests
+- real dataset regression on DKU data
+
+Validated behaviors include:
+- multimedia booth zero-shot retrieval
+- monitor -> screen semantic mapping
+- availability exclusion for overlapping reservations
+- recent usage outranking stale usage when behavior patterns differ
+- bounded LLM calls under shortlist reranking mode
+
+6. Current environment variables
+
+The recommendation module currently supports:
+- LLM_API_KEY
+- RECO_SEMANTIC_MODE
+- RECO_REQUIREMENTS_MODE
+- RECO_LLM_TOP_K
+- RECO_RECENCY_HALF_LIFE_DAYS
+
+Recommended current configuration:
+- RECO_SEMANTIC_MODE=hybrid
+- RECO_REQUIREMENTS_MODE=merge
+- RECO_LLM_TOP_K=8
+- RECO_RECENCY_HALF_LIFE_DAYS=30
+
+7. Current strengths
+
+- Supports cold-start recommendation better than the earlier baseline.
+- Uses both content semantics and historical reservation information.
+- Handles heterogeneous room metadata more robustly.
+- Supports scheduling-aware filtering for concrete booking windows.
+- Uses recency weighting instead of flat historical counts.
+- Places practical bounds on LLM cost and latency.
+- Exposes a clean backend-facing API contract.
+
+8. Remaining limitations
+
+- The module still does not implement explicit fairness or diversity constraints.
+  Example: very strong rooms may continue to dominate the ranking list.
+
+- The module is recommendation-oriented, not yet a full scheduling optimizer.
+  It filters unavailable rooms, but it does not yet solve multi-objective allocation across multiple competing requests.
+
+- LLM-based requirement extraction and reranking still depend on external API quality and latency.
+
+- Validation is currently based on regression scripts and targeted checks rather than a complete automated pytest suite.
+
+- The frontend is still a prototype and is not yet fully integrated with the recommendation API route.
+
+9. Recommended next steps for the second half of the project
+
+1) Backend route implementation
+- Add a real API endpoint for recommendation requests.
+- Add request validation and tenant-specific dataset loading.
+
+2) Full frontend integration
+- Connect form inputs and free-text intent submission to the recommendation API.
+- Render ranking results and explanation reasons directly in the interface.
+
+3) Fairness / diversity improvements
+- Add ranking penalties or diversification rules to avoid repeatedly recommending the same high-frequency rooms.
+- Consider balancing efficiency with fairness under high-demand settings.
+
+4) Expanded evaluation
+- Add a proper automated test suite.
+- Benchmark latency with and without LLM reranking.
+- Evaluate recommendation quality on multiple datasets and user-query scenarios.
+
+5) Toward scheduling optimization
+- Extend from single-query recommendation to multi-request scheduling or allocation logic.
+- Incorporate policy-aware optimization if the project moves toward full intelligent booking allocation.
+
+10. Midterm conclusion
+
+At the midterm stage, the recommendation module has moved from a simple lexical-plus-history prototype to a more proposal-aligned system with:
+- zero-shot semantic recommendation,
+- scheduling-aware availability filtering,
+- recency-weighted behavioral modeling,
+- and bounded LLM reranking for deployment realism.
+
+The module is now in a strong intermediate state: it is no longer just a proof-of-concept, but it is not yet the full end-to-end deployed recommendation-and-scheduling system described in the proposal. The remaining work should focus on backend integration, frontend integration, broader evaluation, and fairness/scheduling extensions.
