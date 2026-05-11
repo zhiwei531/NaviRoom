@@ -37,7 +37,7 @@ The recommendation module now supports a hybrid zero-shot path:
 2. room-profile enrichment from raw room metadata and reservation-side text;
 3. hybrid semantic scoring with local semantic hints plus optional DeepSeek LLM scoring;
 4. explicit availability filtering when frontend/backend provide a concrete booking window;
-5. behavior scoring from historical usage when available;
+5. recency-weighted behavior scoring so recent demand matters more than stale history;
 6. cold-start-friendly final weighting so recommendation quality does not collapse when history is sparse.
 
 This is designed to satisfy the proposal requirement that recommendation should still work for newly uploaded datasets without depending entirely on prior booking behavior.

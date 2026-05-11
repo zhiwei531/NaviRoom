@@ -102,3 +102,39 @@ def test_availability_filter_removes_overlapping_room():
     assert out[0]["room_id"] == "B"
     assert all(item["room_id"] != "A" for item in out)
     assert "available for the requested time window" in out[0]["reasons"]
+
+
+def test_recent_usage_outweighs_old_usage_for_behavior_score():
+    payload = {
+        "user_query": "Need a morning study room",
+        "requirements": {
+            "capacity": 2,
+            "time_slot": "morning",
+            "requested_start": "2026-05-12T09:00:00",
+            "requested_end": "2026-05-12T10:00:00",
+        },
+        "rooms": [
+            {"room_id": "RECENT", "capacity": 2, "equipment": [], "room_type": "study room"},
+            {"room_id": "OLD", "capacity": 2, "equipment": [], "room_type": "study room"},
+        ],
+        "reservations": [
+            {
+                "room_id": "RECENT",
+                "start_time": "2026-05-10T09:00:00",
+                "end_time": "2026-05-10T10:00:00",
+                "status": "completed",
+                "duration_minutes": 60,
+            },
+            {
+                "room_id": "OLD",
+                "start_time": "2025-01-10T09:00:00",
+                "end_time": "2025-01-10T10:00:00",
+                "status": "completed",
+                "duration_minutes": 60,
+            },
+        ],
+    }
+
+    out = recommend_rooms_payload(payload)
+    assert out[0]["room_id"] == "RECENT"
+    assert out[0]["behavior_score"] > out[1]["behavior_score"]

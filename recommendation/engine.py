@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import math
 from typing import Iterable
 
 import os
@@ -331,54 +332,90 @@ def semantic_match(user_query: str, requirements: UserRequirements, room: Room) 
 # STEP 3: BEHAVIOR-BASED RANKING
 # ----------------------------
 
-def _behavior_model(reservations: list[Reservation]):
+def _behavior_model(reservations: list[Reservation], requirements: UserRequirements):
     by_room = _reservation_index(reservations)
-    room_booking_counts = {rid: len(items) for rid, items in by_room.items()}
-    max_count = max(room_booking_counts.values(), default=0)
 
-    room_time_slot_counts: dict[str, Counter[str]] = {}
-    room_durations: dict[str, list[int]] = {}
+    reference_dt: datetime | None = None
+    requested_start = requirements.get("requested_start")
+    if isinstance(requested_start, str):
+        try:
+            reference_dt = parse_iso_dt(requested_start)
+        except Exception:
+            reference_dt = None
 
-    for rid, items in by_room.items():
-        counter: Counter[str] = Counter()
-        durations: list[int] = []
-        for item in items:
-            start_time = item.get("start_time")
+    if reference_dt is None:
+        for reservation in reservations:
+            start_time = reservation.get("start_time")
             if isinstance(start_time, str):
                 try:
-                    counter[to_time_slot(parse_iso_dt(start_time))] += 1
+                    candidate = parse_iso_dt(start_time)
+                    if reference_dt is None or candidate > reference_dt:
+                        reference_dt = candidate
                 except Exception:
                     pass
 
+    half_life_days = float(os.getenv("RECO_RECENCY_HALF_LIFE_DAYS", "30"))
+    if half_life_days <= 0:
+        half_life_days = 30.0
+
+    room_booking_counts: dict[str, float] = {}
+    room_time_slot_counts: dict[str, dict[str, float]] = {}
+    room_duration_stats: dict[str, tuple[float, float]] = {}
+
+    for rid, items in by_room.items():
+        weighted_count = 0.0
+        weighted_slots: dict[str, float] = defaultdict(float)
+        weighted_duration_total = 0.0
+        weighted_duration_weight = 0.0
+
+        for item in items:
+            weight = 1.0
+            start_time = item.get("start_time")
+            start_dt: datetime | None = None
+            if isinstance(start_time, str):
+                try:
+                    start_dt = parse_iso_dt(start_time)
+                    if reference_dt is not None:
+                        age_days = max((reference_dt - start_dt).total_seconds() / 86400.0, 0.0)
+                        weight = math.pow(0.5, age_days / half_life_days)
+                    weighted_slots[to_time_slot(start_dt)] += weight
+                except Exception:
+                    start_dt = None
+
+            weighted_count += weight
+
             duration = item.get("duration_minutes")
             if isinstance(duration, int) and duration > 0:
-                durations.append(duration)
+                weighted_duration_total += duration * weight
+                weighted_duration_weight += weight
 
-        room_time_slot_counts[rid] = counter
-        room_durations[rid] = durations
+        room_booking_counts[rid] = weighted_count
+        room_time_slot_counts[rid] = dict(weighted_slots)
+        room_duration_stats[rid] = (weighted_duration_total, weighted_duration_weight)
 
-    return by_room, room_booking_counts, max_count, room_time_slot_counts, room_durations
+    max_count = max(room_booking_counts.values(), default=0.0)
+    return by_room, room_booking_counts, max_count, room_time_slot_counts, room_duration_stats
 
 
 def behavior_scores(room_id: str, requirements: UserRequirements, model) -> BehaviorScores:
-    by_room, room_booking_counts, max_count, room_time_slot_counts, room_durations = model
+    by_room, room_booking_counts, max_count, room_time_slot_counts, room_duration_stats = model
 
-    popularity = room_booking_counts.get(room_id, 0) / max_count if max_count > 0 else 0.0
+    popularity = room_booking_counts.get(room_id, 0.0) / max_count if max_count > 0 else 0.0
 
     requested_slot = requirements.get("time_slot")
     time_match = 0.0
     if requested_slot:
-        counter = room_time_slot_counts.get(room_id, Counter())
+        counter = room_time_slot_counts.get(room_id, {})
         total = sum(counter.values())
         if total > 0:
-            time_match = counter.get(requested_slot, 0) / total
+            time_match = counter.get(requested_slot, 0.0) / total
 
     requested_duration = requirements.get("duration")
     duration_match = 0.0
     if isinstance(requested_duration, int) and requested_duration > 0:
-        durations = room_durations.get(room_id, [])
-        if durations:
-            avg = sum(durations) / len(durations)
+        weighted_total, weighted_weight = room_duration_stats.get(room_id, (0.0, 0.0))
+        if weighted_weight > 0:
+            avg = weighted_total / weighted_weight
             rel_err = abs(avg - requested_duration) / max(requested_duration, 1)
             duration_match = clamp01(1.0 - rel_err)
 
@@ -431,7 +468,7 @@ def _score_weights(requirements: UserRequirements, history_count: int) -> tuple[
 
 
 def recommend_top5(inp: RecommendInput) -> list[ScoredRoom]:
-    model = _behavior_model(inp.reservations)
+    model = _behavior_model(inp.reservations, inp.requirements)
     by_room = model[0]
     enriched_rooms = [_enrich_room(room, by_room.get(str(room.get("room_id")), [])) for room in inp.rooms]
     candidates = filter_rooms(enriched_rooms, inp.requirements, by_room)
@@ -455,10 +492,10 @@ def recommend_top5(inp: RecommendInput) -> list[ScoredRoom]:
             reasons.append("available for the requested time window")
         if inp.requirements.get("time_slot"):
             reasons.append(
-                f"historically used in {inp.requirements['time_slot']}" if beh.time_match >= 0.5 else f"some {inp.requirements['time_slot']} usage history"
+                f"strong recent {inp.requirements['time_slot']} usage" if beh.time_match >= 0.5 else f"some recent {inp.requirements['time_slot']} usage"
             )
         if isinstance(inp.requirements.get("duration"), int):
-            reasons.append("duration aligns with past usage" if beh.duration_match >= 0.7 else "duration differs from typical usage")
+            reasons.append("duration aligns with recent usage" if beh.duration_match >= 0.7 else "duration differs from recent usage")
         reasons.extend(sem.reasons[:2])
 
         scored_room: ScoredRoom = {

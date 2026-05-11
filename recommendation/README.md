@@ -21,6 +21,7 @@ The current implementation adds:
 - derived room use cases such as `video practice`, `online meeting`, and `online interview`;
 - optional LLM requirement completion that can merge with partially provided structured constraints;
 - explicit scheduling inputs via `requested_start` and `requested_end` so recommendation can exclude conflicting rooms;
+- recency-weighted behavior modeling so recent usage influences ranking more than stale reservations;
 - a hybrid semantic path where local matching remains available even if the LLM is unavailable.
 
 ## Data schema
