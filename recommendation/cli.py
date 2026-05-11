@@ -17,10 +17,12 @@ def main() -> int:
     p.add_argument("--room-type", dest="room_type", default=None)
     p.add_argument("--equipment", nargs="*", default=None)
     p.add_argument("--preferences", nargs="*", default=None)
+    p.add_argument("--start-time", dest="requested_start", default=None, help="Requested ISO start time")
+    p.add_argument("--end-time", dest="requested_end", default=None, help="Requested ISO end time")
     p.epilog = (
         "Env toggles (optional): "
-        "RECO_SEMANTIC_MODE=llm enables DeepSeek-based semantic scoring; "
-        "RECO_REQUIREMENTS_MODE=llm lets LLM parse requirements when none are provided."
+        "RECO_SEMANTIC_MODE=hybrid enables hybrid semantic scoring; "
+        "RECO_REQUIREMENTS_MODE=merge lets LLM fill missing requirement fields."
     )
     args = p.parse_args()
 
@@ -39,6 +41,10 @@ def main() -> int:
         requirements["equipment"] = args.equipment
     if args.preferences is not None:
         requirements["preferences"] = args.preferences
+    if args.requested_start is not None:
+        requirements["requested_start"] = args.requested_start
+    if args.requested_end is not None:
+        requirements["requested_end"] = args.requested_end
 
     out = recommend_from_dataset_json(user_query=args.query, requirements=requirements, dataset=dataset)
     print(json.dumps(out, ensure_ascii=False, indent=2))

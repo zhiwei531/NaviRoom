@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from recommendation.api import recommend_from_dataset_json
+from recommendation.api import recommend_from_dataset_json, recommend_rooms_payload
 
 
 def _load_dataset():
@@ -65,3 +65,40 @@ def test_zero_shot_monitor_query_maps_to_screen_equipment():
     assert out
     assert out[0]["semantic_score"] >= 0.3
     assert any("screen" in reason or "booth" in reason or "monitor" in reason for reason in out[0]["reasons"])
+
+
+def test_availability_filter_removes_overlapping_room():
+    payload = {
+        "user_query": "Need a study room for a 10am team meeting",
+        "requirements": {
+            "capacity": 4,
+            "requested_start": "2026-05-12T10:00:00",
+            "requested_end": "2026-05-12T11:00:00",
+        },
+        "rooms": [
+            {"room_id": "A", "capacity": 4, "equipment": ["screen"], "room_type": "study room"},
+            {"room_id": "B", "capacity": 4, "equipment": ["screen"], "room_type": "study room"},
+        ],
+        "reservations": [
+            {
+                "room_id": "A",
+                "start_time": "2026-05-12T10:15:00",
+                "end_time": "2026-05-12T10:45:00",
+                "status": "confirmed",
+                "duration_minutes": 30,
+            },
+            {
+                "room_id": "B",
+                "start_time": "2026-05-12T12:00:00",
+                "end_time": "2026-05-12T13:00:00",
+                "status": "confirmed",
+                "duration_minutes": 60,
+            },
+        ],
+    }
+
+    out = recommend_rooms_payload(payload)
+    assert out
+    assert out[0]["room_id"] == "B"
+    assert all(item["room_id"] != "A" for item in out)
+    assert "available for the requested time window" in out[0]["reasons"]

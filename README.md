@@ -36,8 +36,9 @@ The recommendation module now supports a hybrid zero-shot path:
 1. hard constraint filtering on capacity, room type, and equipment;
 2. room-profile enrichment from raw room metadata and reservation-side text;
 3. hybrid semantic scoring with local semantic hints plus optional DeepSeek LLM scoring;
-4. behavior scoring from historical usage when available;
-5. cold-start-friendly final weighting so recommendation quality does not collapse when history is sparse.
+4. explicit availability filtering when frontend/backend provide a concrete booking window;
+5. behavior scoring from historical usage when available;
+6. cold-start-friendly final weighting so recommendation quality does not collapse when history is sparse.
 
 This is designed to satisfy the proposal requirement that recommendation should still work for newly uploaded datasets without depending entirely on prior booking behavior.
 
@@ -58,6 +59,8 @@ Recommended backend request shape:
   "requirements": {
     "capacity": 2,
     "duration": 30,
+    "requested_start": "2026-05-12T14:00:00",
+    "requested_end": "2026-05-12T14:30:00",
     "time_slot": "afternoon",
     "room_type": "multi-media booth",
     "equipment": ["screen"],

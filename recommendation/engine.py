@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Iterable
 
 import os
 
 from .types import BehaviorScores, Reservation, Room, ScoredRoom, SemanticExplanation, UserRequirements
-from .utils import clamp01, jaccard, normalize_list, normalize_text, parse_iso_dt, to_time_slot, tokenize_text
+from .utils import clamp01, jaccard, normalize_list, normalize_text, overlaps, parse_iso_dt, to_time_slot, tokenize_text
 
 
 @dataclass
@@ -35,9 +36,10 @@ SEMANTIC_HINTS: dict[str, list[str]] = {
     "meeting": ["discussion", "general purpose room", "screen"],
 }
 
-
 RESERVATION_TEXT_KEYS = ("description", "room_type")
 RAW_DESCRIPTION_KEYS = ("room_type", "description", "space_type")
+BLOCKING_STATUSES = {"approved", "confirmed", "booked", "reserved", "pending", "active", "completed"}
+NON_BLOCKING_STATUSES = {"cancelled", "canceled", "rejected", "declined", "expired"}
 
 
 def _dedupe(values: Iterable[str]) -> list[str]:
@@ -79,7 +81,7 @@ def _collect_room_aliases(room: Room, room_reservations: list[Reservation]) -> l
             if isinstance(value, str):
                 aliases.append(value)
 
-    raw_tokens = []
+    raw_tokens: list[str] = []
     for alias in aliases:
         tokens = tokenize_text(alias)
         raw_tokens.extend(tokens)
@@ -173,23 +175,80 @@ def _expand_query_terms(user_query: str, requirements: UserRequirements) -> set[
 
 
 def _room_type_candidates(room: Room) -> set[str]:
-    candidates: set[str] = set()
-    for value in _extract_room_text(room):
-        candidates.add(normalize_text(value))
-    return {value for value in candidates if value}
+    return {normalize_text(value) for value in _extract_room_text(room) if normalize_text(value)}
+
+
+def _reservation_window(reservation: Reservation) -> tuple[datetime, datetime] | None:
+    start_raw = reservation.get("start_time")
+    if not isinstance(start_raw, str):
+        return None
+    try:
+        start_dt = parse_iso_dt(start_raw)
+    except Exception:
+        return None
+
+    end_raw = reservation.get("end_time")
+    if isinstance(end_raw, str):
+        try:
+            end_dt = parse_iso_dt(end_raw)
+            if end_dt > start_dt:
+                return start_dt, end_dt
+        except Exception:
+            pass
+
+    duration = reservation.get("duration_minutes")
+    if isinstance(duration, int) and duration > 0:
+        return start_dt, start_dt + timedelta(minutes=duration)
+    return None
+
+
+def _is_blocking_status(status: object) -> bool:
+    normalized = normalize_text(status)
+    if not normalized:
+        return True
+    if normalized in NON_BLOCKING_STATUSES:
+        return False
+    return normalized in BLOCKING_STATUSES or True
+
+
+def _room_is_available(room_id: str, requirements: UserRequirements, room_reservations: list[Reservation]) -> bool:
+    requested_start = requirements.get("requested_start")
+    requested_end = requirements.get("requested_end")
+    if not isinstance(requested_start, str) or not isinstance(requested_end, str):
+        return True
+
+    try:
+        requested_window = (parse_iso_dt(requested_start), parse_iso_dt(requested_end))
+    except Exception:
+        return True
+
+    if requested_window[1] <= requested_window[0]:
+        return True
+
+    for reservation in room_reservations:
+        if not _is_blocking_status(reservation.get("status")):
+            continue
+        reservation_window = _reservation_window(reservation)
+        if reservation_window and overlaps(requested_window[0], requested_window[1], reservation_window[0], reservation_window[1]):
+            return False
+    return True
 
 
 # ----------------------------
 # STEP 1: FILTER (HARD CONSTRAINTS)
 # ----------------------------
 
-def filter_rooms(rooms: Iterable[Room], requirements: UserRequirements) -> list[Room]:
+def filter_rooms(rooms: Iterable[Room], requirements: UserRequirements, reservations_by_room: dict[str, list[Reservation]]) -> list[Room]:
     required_capacity = requirements.get("capacity")
     required_room_type = normalize_text(requirements.get("room_type")) if requirements.get("room_type") else ""
     required_equipment = normalize_list(requirements.get("equipment"))
 
     candidates: list[Room] = []
     for room in rooms:
+        room_id = room.get("room_id")
+        if not isinstance(room_id, str) or not room_id:
+            continue
+
         cap = room.get("capacity")
         if required_capacity is not None and isinstance(cap, int):
             if cap < required_capacity:
@@ -201,13 +260,17 @@ def filter_rooms(rooms: Iterable[Room], requirements: UserRequirements) -> list[
             room_type_candidates = _room_type_candidates(room)
             if required_room_type not in room_type_candidates:
                 required_tokens = set(tokenize_text(required_room_type))
-                if not required_tokens or not required_tokens.issubset(set().union(*(set(tokenize_text(v)) for v in room_type_candidates))):
+                candidate_tokens = set().union(*(set(tokenize_text(value)) for value in room_type_candidates)) if room_type_candidates else set()
+                if not required_tokens or not required_tokens.issubset(candidate_tokens):
                     continue
 
         if required_equipment:
             equipment = set(normalize_list(room.get("equipment")))
             if not set(required_equipment).issubset(equipment):
                 continue
+
+        if not _room_is_available(room_id, requirements, reservations_by_room.get(room_id, [])):
+            continue
 
         candidates.append(room)
 
@@ -223,10 +286,10 @@ def _local_semantic_match(user_query: str, requirements: UserRequirements, room:
     room_terms = set(_extract_room_text(room))
     score = clamp01(jaccard(query_terms, room_terms))
 
-    overlap = [term for term in sorted(query_terms & room_terms) if len(term) > 2]
+    overlap_terms = [term for term in sorted(query_terms & room_terms) if len(term) > 2]
     reasons: list[str] = []
-    if overlap:
-        reasons.append(f"semantic match: {', '.join(overlap[:6])}")
+    if overlap_terms:
+        reasons.append(f"semantic match: {', '.join(overlap_terms[:6])}")
     else:
         reasons.append("semantic match is weak")
 
@@ -244,8 +307,8 @@ def _local_semantic_match(user_query: str, requirements: UserRequirements, room:
 def semantic_match(user_query: str, requirements: UserRequirements, room: Room) -> SemanticExplanation:
     mode = os.getenv("RECO_SEMANTIC_MODE", "hybrid").strip().lower()
     local = _local_semantic_match(user_query, requirements, room)
-
-    should_call_llm = mode == "llm" or local.score >= 0.08 or any(term in set(_extract_room_text(room)) for term in {"booth", "screen", "whiteboard", "study room"})
+    room_terms = set(_extract_room_text(room))
+    should_call_llm = mode == "llm" or local.score >= 0.08 or any(term in room_terms for term in {"booth", "screen", "whiteboard", "study room"})
 
     if mode in {"llm", "hybrid", "zero_shot"} and should_call_llm:
         try:
@@ -371,7 +434,7 @@ def recommend_top5(inp: RecommendInput) -> list[ScoredRoom]:
     model = _behavior_model(inp.reservations)
     by_room = model[0]
     enriched_rooms = [_enrich_room(room, by_room.get(str(room.get("room_id")), [])) for room in inp.rooms]
-    candidates = filter_rooms(enriched_rooms, inp.requirements)
+    candidates = filter_rooms(enriched_rooms, inp.requirements, by_room)
 
     scored: list[tuple[float, ScoredRoom]] = []
     for room in candidates:
@@ -388,6 +451,8 @@ def recommend_top5(inp: RecommendInput) -> list[ScoredRoom]:
 
         reasons: list[str] = []
         reasons.extend(rule_reasons)
+        if inp.requirements.get("requested_start") and inp.requirements.get("requested_end"):
+            reasons.append("available for the requested time window")
         if inp.requirements.get("time_slot"):
             reasons.append(
                 f"historically used in {inp.requirements['time_slot']}" if beh.time_match >= 0.5 else f"some {inp.requirements['time_slot']} usage history"

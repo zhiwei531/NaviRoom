@@ -9,7 +9,6 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 def parse_iso_dt(value: str) -> datetime:
-    # Dataset uses e.g. 2025-04-29T14:50:00
     return datetime.fromisoformat(value)
 
 
@@ -64,3 +63,11 @@ def jaccard(a: set[str], b: set[str]) -> float:
     if not a or not b:
         return 0.0
     return len(a & b) / len(a | b)
+
+
+def overlaps(start_a: datetime, end_a: datetime, start_b: datetime, end_b: datetime) -> bool:
+    return start_a < end_b and start_b < end_a
+
+
+def minutes_between(start: datetime, end: datetime) -> int:
+    return int((end - start).total_seconds() // 60)

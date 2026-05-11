@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, TypedDict
 
 
 TimeSlot = Literal["morning", "afternoon", "evening", "night"]
@@ -15,6 +14,8 @@ class UserRequirements(TypedDict, total=False):
     preferences: list[str]
     room_type: str
     equipment: list[str]
+    requested_start: str  # ISO datetime
+    requested_end: str  # ISO datetime
 
 
 class Room(TypedDict, total=False):
@@ -63,5 +64,4 @@ class BehaviorScores:
 
     @property
     def behavior_score(self) -> float:
-        # equal weights inside behavior
         return (self.popularity + self.time_match + self.duration_match) / 3.0

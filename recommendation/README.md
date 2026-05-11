@@ -20,6 +20,7 @@ The current implementation adds:
 - room-type recovery from `raw_description`, e.g. `Multi-Media Booth` even when canonical `room_type` is generic;
 - derived room use cases such as `video practice`, `online meeting`, and `online interview`;
 - optional LLM requirement completion that can merge with partially provided structured constraints;
+- explicit scheduling inputs via `requested_start` and `requested_end` so recommendation can exclude conflicting rooms;
 - a hybrid semantic path where local matching remains available even if the LLM is unavailable.
 
 ## Data schema
@@ -94,6 +95,8 @@ def recommend_route(payload: dict):
 
 Backend responsibilities should be limited to:
 
+- pass `requested_start` and `requested_end` when the user is booking a specific slot;
+
 - authentication and authorization;
 - tenant-specific dataset loading;
 - request validation;
@@ -115,8 +118,8 @@ Suggested request body:
   "user_query": "Need a quiet room for a team brainstorm with whiteboard",
   "requirements": {
     "capacity": 4,
-    "time_slot": "evening",
-    "duration": 90,
+    "requested_start": "2026-05-12T18:00:00",
+    "requested_end": "2026-05-12T19:30:00",
     "equipment": ["whiteboard"]
   }
 }
