@@ -1,27 +1,46 @@
 # Recommendation module
 
-This folder implements a **3-step room recommendation pipeline**:
+This folder implements a cold-start-friendly room recommendation pipeline for NaviRoom.
 
-1. **Hard constraints filter** (capacity / room_type / equipment)
-2. **Semantic recall** (lexical by default, optional DeepSeek LLM scoring)
-3. **Behavior-based ranking** (popularity + time-slot usage + duration similarity)
+## Pipeline overview
 
-It returns **top 5 rooms** in the strict JSON format required by your prompt.
+1. hard constraints filter on `capacity`, `room_type`, and `equipment`;
+2. room profile enrichment from `raw_description` and reservation-side metadata;
+3. hybrid zero-shot semantic scoring;
+4. behavior-based scoring from usage history when available;
+5. final weighted ranking with reduced dependence on history under sparse-data conditions.
 
-## Data schema (current)
+## What changed
 
-The code is aligned with your dataset JSON shape:
+The previous implementation relied too heavily on lexical overlap and historical behavior. That was not sufficient for the proposal target of zero-shot recommendation.
 
-- Dataset object:
-  - `rooms`: array of room objects
-  - `reservations`: array of reservation objects
+The current implementation adds:
 
-Example path in this repo:
+- semantic alias handling such as `monitor -> screen`;
+- room-type recovery from `raw_description`, e.g. `Multi-Media Booth` even when canonical `room_type` is generic;
+- derived room use cases such as `video practice`, `online meeting`, and `online interview`;
+- optional LLM requirement completion that can merge with partially provided structured constraints;
+- a hybrid semantic path where local matching remains available even if the LLM is unavailable.
+
+## Data schema
+
+Expected dataset object:
+
+```json
+{
+  "rooms": [...],
+  "reservations": [...]
+}
+```
+
+The current repo includes:
+
 - `data_processing/output/dku_dataset.json`
+- `data_processing/output/kaggle_dataset.json`
 
-## API usage (Python)
+## Python API
 
-### 1) Recommend from a dataset JSON
+### 1. Recommend from a dataset object
 
 ```python
 import json
@@ -31,91 +50,97 @@ with open("data_processing/output/dku_dataset.json", "r", encoding="utf-8") as f
     dataset = json.load(f)
 
 results = recommend_from_dataset_json(
-    user_query="Need a study room with a screen in the afternoon",
+    user_query="Need a multimedia booth for video practice",
     requirements={
-        "capacity": 4,
-        "time_slot": "afternoon",
-        "duration": 60,
-        "room_type": "study room",
-        "equipment": ["screen"],
-        "preferences": ["quiet"],
+        "capacity": 2,
+        "duration": 30,
+        "room_type": "multi-media booth",
     },
     dataset=dataset,
 )
-
-print(results)  # already JSON-serializable
 ```
 
-### 2) Recommend from an API-style payload
+### 2. Recommend from a backend-style payload
 
 ```python
 from recommendation.api import recommend_rooms_payload
 
 payload = {
-  "user_query": "study room with screen",
-  "requirements": {"capacity": 4, "time_slot": "afternoon", "duration": 60},
-  "rooms": [...],
-  "reservations": [...],
+    "user_query": "Need a place for an online interview with a monitor",
+    "requirements": {
+        "capacity": 1,
+        "duration": 60,
+        "equipment": ["screen"]
+    },
+    "rooms": [...],
+    "reservations": [...],
 }
 
 results = recommend_rooms_payload(payload)
 ```
 
-## Enabling DeepSeek LLM scoring (optional)
+## Integration surface for backend services
 
-This repo already includes a DeepSeek-compatible client in `recommendation/llm.py` (uses the `openai` SDK).
+If you later add Flask/FastAPI/Django routes, the intended wrapper is:
 
-### Environment variables
+```python
+from recommendation.api import recommend_rooms_payload
 
-- `LLM_API_KEY` (required)
-- `RECO_SEMANTIC_MODE=llm` enables LLM semantic scoring (Step 2)
-- `RECO_REQUIREMENTS_MODE=llm` enables LLM extraction of requirements **only when you pass an empty requirements dict**
-
-Example:
-
-```bash
-export LLM_API_KEY='***'
-export RECO_SEMANTIC_MODE=llm
-# optional
-export RECO_REQUIREMENTS_MODE=llm
+# pseudo-code
+@app.post('/api/recommendations')
+def recommend_route(payload: dict):
+    return recommend_rooms_payload(payload)
 ```
 
-Notes:
-- The LLM is asked to return **ONLY JSON**.
-- Reasons are constrained to reference only values present in the provided room object and/or the query.
-- If the LLM call fails, the system **falls back to lexical scoring**.
+Backend responsibilities should be limited to:
 
-## CLI usage
+- authentication and authorization;
+- tenant-specific dataset loading;
+- request validation;
+- calling `recommend_rooms_payload(...)`;
+- returning the JSON result to frontend clients.
 
-```bash
-python -m recommendation.cli \
-  --dataset data_processing/output/dku_dataset.json \
-  --query "study room with screen" \
-  --capacity 4 \
-  --time-slot afternoon \
-  --duration 60 \
-  --room-type "study room" \
-  --equipment screen
-```
+## Integration surface for frontend clients
 
-## Output format
+Frontend clients should not reproduce recommendation logic locally. They should only submit:
 
-The recommender returns a list with up to 5 items:
+- user free-text query;
+- optional structured constraints;
+- then render the ranked response list.
+
+Suggested request body:
 
 ```json
-[
-  {
-    "room_id": "R1124",
-    "final_score": 0.8432,
-    "semantic_score": 0.8123,
-    "behavior_score": 0.9055,
-    "reasons": [
-      "matches capacity",
-      "has required equipment",
-      "frequently used in afternoon",
-      "similar duration usage",
-      "semantic overlap: screen, study room"
-    ]
+{
+  "user_query": "Need a quiet room for a team brainstorm with whiteboard",
+  "requirements": {
+    "capacity": 4,
+    "time_slot": "evening",
+    "duration": 90,
+    "equipment": ["whiteboard"]
   }
-]
+}
 ```
+
+## Environment variables
+
+- `LLM_API_KEY`: required for DeepSeek-backed semantic scoring or requirement extraction.
+- `RECO_SEMANTIC_MODE`: `lexical`, `llm`, `hybrid`, or `zero_shot`.
+- `RECO_REQUIREMENTS_MODE`: `manual`, `llm`, or `merge`.
+
+Recommended defaults:
+
+```bash
+export RECO_SEMANTIC_MODE=hybrid
+export RECO_REQUIREMENTS_MODE=merge
+```
+
+## Validation notes
+
+Current server validation used:
+
+- `python -m py_compile recommendation/*.py`
+- manual regression checks for:
+  - `Need a multimedia booth for video practice`
+  - `Need a place for an online interview with a monitor`
+  - `need a study room with screen and whiteboard in the afternoon`
