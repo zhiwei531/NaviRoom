@@ -305,13 +305,22 @@ def _local_semantic_match(user_query: str, requirements: UserRequirements, room:
     return SemanticExplanation(score=score, reasons=_dedupe(reasons))
 
 
-def semantic_match(user_query: str, requirements: UserRequirements, room: Room) -> SemanticExplanation:
+def _should_call_llm(mode: str, local: SemanticExplanation, room: Room) -> bool:
+    room_terms = set(_extract_room_text(room))
+    return mode == "llm" or local.score >= 0.08 or any(term in room_terms for term in {"booth", "screen", "whiteboard", "study room"})
+
+
+def semantic_match(
+    user_query: str,
+    requirements: UserRequirements,
+    room: Room,
+    *,
+    allow_llm: bool = True,
+) -> SemanticExplanation:
     mode = os.getenv("RECO_SEMANTIC_MODE", "hybrid").strip().lower()
     local = _local_semantic_match(user_query, requirements, room)
-    room_terms = set(_extract_room_text(room))
-    should_call_llm = mode == "llm" or local.score >= 0.08 or any(term in room_terms for term in {"booth", "screen", "whiteboard", "study room"})
 
-    if mode in {"llm", "hybrid", "zero_shot"} and should_call_llm:
+    if mode in {"llm", "hybrid", "zero_shot"} and allow_llm and _should_call_llm(mode, local, room):
         try:
             from .llm import llm_score_relevance
 
@@ -473,13 +482,35 @@ def recommend_top5(inp: RecommendInput) -> list[ScoredRoom]:
     enriched_rooms = [_enrich_room(room, by_room.get(str(room.get("room_id")), [])) for room in inp.rooms]
     candidates = filter_rooms(enriched_rooms, inp.requirements, by_room)
 
+    mode = os.getenv("RECO_SEMANTIC_MODE", "hybrid").strip().lower()
+    llm_top_k = int(os.getenv("RECO_LLM_TOP_K", "8"))
+    if llm_top_k < 1:
+        llm_top_k = 1
+
+    precomputed_local: dict[str, SemanticExplanation] = {}
+    shortlist_rank: list[tuple[float, str]] = []
+    for room in candidates:
+        rid = room.get("room_id")
+        if not isinstance(rid, str) or not rid:
+            continue
+        local = _local_semantic_match(inp.user_query, inp.requirements, room)
+        precomputed_local[rid] = local
+        if mode in {"llm", "hybrid", "zero_shot"} and _should_call_llm(mode, local, room):
+            shortlist_rank.append((local.score, rid))
+
+    shortlist_rank.sort(key=lambda item: item[0], reverse=True)
+    llm_shortlist = {rid for _, rid in shortlist_rank[:llm_top_k]}
+
     scored: list[tuple[float, ScoredRoom]] = []
     for room in candidates:
         rid = room.get("room_id")
         if not isinstance(rid, str) or not rid:
             continue
 
-        sem = semantic_match(inp.user_query, inp.requirements, room)
+        sem = semantic_match(inp.user_query, inp.requirements, room, allow_llm=rid in llm_shortlist)
+        if rid not in llm_shortlist and rid in precomputed_local:
+            sem = precomputed_local[rid]
+
         beh = behavior_scores(rid, inp.requirements, model)
         rule, rule_reasons = rule_score(room, inp.requirements)
 

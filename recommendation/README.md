@@ -6,9 +6,10 @@ This folder implements a cold-start-friendly room recommendation pipeline for Na
 
 1. hard constraints filter on `capacity`, `room_type`, and `equipment`;
 2. room profile enrichment from `raw_description` and reservation-side metadata;
-3. hybrid zero-shot semantic scoring;
-4. behavior-based scoring from usage history when available;
-5. final weighted ranking with reduced dependence on history under sparse-data conditions.
+3. local semantic recall;
+4. optional Top-K LLM reranking for the strongest candidates;
+5. behavior-based scoring from usage history when available;
+6. final weighted ranking with reduced dependence on history under sparse-data conditions.
 
 ## What changed
 
@@ -22,7 +23,8 @@ The current implementation adds:
 - optional LLM requirement completion that can merge with partially provided structured constraints;
 - explicit scheduling inputs via `requested_start` and `requested_end` so recommendation can exclude conflicting rooms;
 - recency-weighted behavior modeling so recent usage influences ranking more than stale reservations;
-- a hybrid semantic path where local matching remains available even if the LLM is unavailable.
+- a hybrid semantic path where local matching remains available even if the LLM is unavailable;
+- bounded LLM reranking so deploy-time cost and latency stay predictable.
 
 ## Data schema
 
@@ -131,12 +133,14 @@ Suggested request body:
 - `LLM_API_KEY`: required for DeepSeek-backed semantic scoring or requirement extraction.
 - `RECO_SEMANTIC_MODE`: `lexical`, `llm`, `hybrid`, or `zero_shot`.
 - `RECO_REQUIREMENTS_MODE`: `manual`, `llm`, or `merge`.
+- `RECO_LLM_TOP_K`: maximum number of recalled rooms sent to the LLM for reranking.
 
 Recommended defaults:
 
 ```bash
 export RECO_SEMANTIC_MODE=hybrid
 export RECO_REQUIREMENTS_MODE=merge
+export RECO_LLM_TOP_K=8
 ```
 
 ## Validation notes

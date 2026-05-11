@@ -35,7 +35,7 @@ The recommendation module now supports a hybrid zero-shot path:
 
 1. hard constraint filtering on capacity, room type, and equipment;
 2. room-profile enrichment from raw room metadata and reservation-side text;
-3. hybrid semantic scoring with local semantic hints plus optional DeepSeek LLM scoring;
+3. local semantic recall plus optional Top-K LLM reranking;
 4. explicit availability filtering when frontend/backend provide a concrete booking window;
 5. recency-weighted behavior scoring so recent demand matters more than stale history;
 6. cold-start-friendly final weighting so recommendation quality does not collapse when history is sparse.
@@ -141,11 +141,13 @@ Optional LLM-backed recommendation features use:
 - `LLM_API_KEY`
 - `RECO_SEMANTIC_MODE`
 - `RECO_REQUIREMENTS_MODE`
+- `RECO_LLM_TOP_K`
 
 Recommended modes:
 
-- `RECO_SEMANTIC_MODE=hybrid`: local semantic scoring plus LLM re-scoring when useful.
+- `RECO_SEMANTIC_MODE=hybrid`: local recall plus LLM reranking on a bounded shortlist.
 - `RECO_REQUIREMENTS_MODE=merge`: preserve provided constraints and let the LLM fill only missing fields.
+- `RECO_LLM_TOP_K=8`: cap how many candidate rooms are sent to the LLM for reranking.
 
 ## Validation
 

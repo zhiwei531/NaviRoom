@@ -138,3 +138,46 @@ def test_recent_usage_outweighs_old_usage_for_behavior_score():
     out = recommend_rooms_payload(payload)
     assert out[0]["room_id"] == "RECENT"
     assert out[0]["behavior_score"] > out[1]["behavior_score"]
+
+
+def test_llm_rerank_is_limited_to_shortlist():
+    import os
+    from unittest.mock import patch
+
+    payload = {
+        "user_query": "Need a screen room",
+        "requirements": {"capacity": 1},
+        "rooms": [
+            {"room_id": "R1", "capacity": 1, "equipment": ["screen"], "room_type": "study room"},
+            {"room_id": "R2", "capacity": 1, "equipment": ["screen"], "room_type": "study room"},
+            {"room_id": "R3", "capacity": 1, "equipment": ["screen"], "room_type": "study room"},
+            {"room_id": "R4", "capacity": 1, "equipment": ["screen"], "room_type": "study room"},
+        ],
+        "reservations": [],
+    }
+
+    old_mode = os.environ.get("RECO_SEMANTIC_MODE")
+    old_top_k = os.environ.get("RECO_LLM_TOP_K")
+    os.environ["RECO_SEMANTIC_MODE"] = "hybrid"
+    os.environ["RECO_LLM_TOP_K"] = "2"
+
+    calls = []
+
+    def fake_llm_score_relevance(*, user_query, room_features, cfg=None):
+        calls.append(room_features["room_id"])
+        return 0.8, [f"llm rerank for {room_features['room_id']}"]
+
+    try:
+        with patch("recommendation.llm.llm_score_relevance", side_effect=fake_llm_score_relevance):
+            out = recommend_rooms_payload(payload)
+        assert out
+        assert len(calls) == 2, calls
+    finally:
+        if old_mode is None:
+            os.environ.pop("RECO_SEMANTIC_MODE", None)
+        else:
+            os.environ["RECO_SEMANTIC_MODE"] = old_mode
+        if old_top_k is None:
+            os.environ.pop("RECO_LLM_TOP_K", None)
+        else:
+            os.environ["RECO_LLM_TOP_K"] = old_top_k
