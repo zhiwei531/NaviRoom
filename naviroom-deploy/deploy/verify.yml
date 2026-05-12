@@ -1,0 +1,57 @@
+---
+- name: Verify NaviRoom deployment status
+  hosts: naviroom
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check Python venv exists
+      ansible.builtin.stat:
+        path: "{{ naviroom_venv }}/bin/python"
+      register: venv_python
+
+    - name: Check app env file exists
+      ansible.builtin.stat:
+        path: "{{ naviroom_app_dir }}/.env"
+      register: app_env
+
+    - name: Check MySQL service status
+      ansible.builtin.systemd:
+        name: mysql
+      register: mysql_service
+
+    - name: Check target database exists
+      community.mysql.mysql_query:
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        query: "SHOW DATABASES LIKE '{{ naviroom_db_name }}';"
+      register: db_exists
+
+    - name: Check naviroom-api status when enabled
+      ansible.builtin.systemd:
+        name: naviroom-api
+      register: api_service
+      when: naviroom_enable_api_service | bool
+
+    - name: Check frontend index file when enabled
+      ansible.builtin.stat:
+        path: "{{ naviroom_frontend_web_root }}/index.html"
+      register: frontend_index
+      when: naviroom_enable_frontend_deploy | bool
+
+    - name: Check nginx service status when enabled
+      ansible.builtin.systemd:
+        name: nginx
+      register: nginx_service
+      when: naviroom_enable_nginx | bool
+
+    - name: Print verification summary
+      ansible.builtin.debug:
+        msg:
+          - "venv_python_exists={{ venv_python.stat.exists }}"
+          - "app_env_exists={{ app_env.stat.exists }}"
+          - "mysql_active={{ mysql_service.status.ActiveState | default('unknown') }}"
+          - "db_found={{ (db_exists.query_result | default([]) | length) > 0 and (db_exists.query_result[0] | length) > 0 }}"
+          - "api_active={{ (api_service.status.ActiveState | default('skipped')) if (naviroom_enable_api_service | bool) else 'skipped' }}"
+          - "frontend_index_exists={{ (frontend_index.stat.exists | default(false)) if (naviroom_enable_frontend_deploy | bool) else 'skipped' }}"
+          - "nginx_active={{ (nginx_service.status.ActiveState | default('skipped')) if (naviroom_enable_nginx | bool) else 'skipped' }}"
+

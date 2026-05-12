@@ -1,0 +1,37 @@
+---
+- name: Prepare server baseline
+  hosts: naviroom
+  become: true
+  gather_facts: true
+  roles:
+    - common
+
+- name: Install and configure MySQL
+  hosts: naviroom
+  become: true
+  gather_facts: true
+  roles:
+    - mysql
+
+- name: Deploy NaviRoom app runtime
+  hosts: naviroom
+  become: true
+  gather_facts: true
+  roles:
+    - app
+
+- name: Deploy frontend static site (optional)
+  hosts: naviroom
+  become: true
+  gather_facts: true
+  roles:
+    - role: frontend
+      when: naviroom_enable_frontend_deploy | bool
+
+- name: Configure Nginx reverse proxy (optional)
+  hosts: naviroom
+  become: true
+  gather_facts: true
+  roles:
+    - role: nginx
+      when: naviroom_enable_nginx | bool

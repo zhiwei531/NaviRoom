@@ -1,0 +1,6 @@
+---
+- name: Restart naviroom api
+  ansible.builtin.systemd:
+    name: naviroom-api
+    state: restarted
+    daemon_reload: true

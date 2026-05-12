@@ -1,0 +1,15 @@
+[Unit]
+Description=NaviRoom FastAPI service
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory={{ naviroom_api_workdir }}
+EnvironmentFile={{ naviroom_app_dir }}/.env
+ExecStart={{ naviroom_venv }}/bin/uvicorn {{ naviroom_api_module }} --host {{ naviroom_api_host }} --port {{ naviroom_api_port }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
