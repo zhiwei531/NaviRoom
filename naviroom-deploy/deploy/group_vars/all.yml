@@ -41,7 +41,7 @@ naviroom_llm_api_key: ""
 naviroom_enable_frontend_deploy: true
 naviroom_enable_nginx: true
 # 前端源码目录名（相对仓库根，与 naviroom-deploy 同级；含登录/注册页）
-naviroom_frontend_bundle_name: "NaviRoom Homepage Upload Interface Version2"
+naviroom_frontend_bundle_name: "Naviroom Homepage Upload Interface Version2"
 naviroom_frontend_dir: /opt/naviroom/frontend
 naviroom_frontend_web_root: /var/www/naviroom
 
