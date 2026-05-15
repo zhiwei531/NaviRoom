@@ -24,11 +24,29 @@ const values = [
   },
 ];
 
+import member1Image from '../../assets/team/member1.png';
+import member2Image from '../../assets/team/member2.png';
+import member3Image from '../../assets/team/member3.png';
+
 const team = [
-  { name: 'Aria Chen', role: 'Co-founder & CEO' },
-  { name: 'Marcus Yuen', role: 'Co-founder & CTO' },
-  { name: 'Sofia Rossi', role: 'Head of Design' },
-  { name: 'Daniel Park', role: 'Head of Product' },
+  {
+    name: 'Zhiwei Li',
+    role: 'Team Leader',
+    image: member1Image,
+    bio: 'Responsible for overall project coordination, system integration, and deployment workflow.',
+  },
+  {
+    name: 'Xinlu Li',
+    role: 'Team Member',
+    image: member2Image,
+    bio: 'Focused on recommendation modeling, semantic matching, and ranking pipeline design.',
+  },
+  {
+    name: 'Xiangyi Li',
+    role: 'Team Member',
+    image: member3Image,
+    bio: 'Worked on data processing, NLP-based feature extraction, and frontend interaction design.',
+  },
 ];
 
 export function AboutPage() {
