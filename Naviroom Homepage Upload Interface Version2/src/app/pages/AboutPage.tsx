@@ -34,9 +34,8 @@ const team = [
     role: 'Team Leader',
     image: member1Image,
     bio: [
-      'Overall project coordination and milestone planning.',
-      'System integration across frontend, backend, and deployment.',
-      'Deployment workflow maintenance and production updates.',
+      'Core Algorithm Development.',
+      'Recommendation Module Design.',
     ],
   },
   {
@@ -44,9 +43,8 @@ const team = [
     role: 'Team Member',
     image: member2Image,
     bio: [
-      'Recommendation modeling and ranking logic design.',
-      'Semantic matching and requirement interpretation.',
-      'Evaluation of recommendation quality and result explanations.',
+      'Backend Engineering.',
+      'Cloud deployment and infrastructure management.',
     ],
   },
   {
@@ -54,8 +52,7 @@ const team = [
     role: 'Team Member',
     image: member3Image,
     bio: [
-      'Data processing pipeline and dataset normalization.',
-      'NLP-based room feature extraction from text descriptions.',
+      'UI & UX design.',
       'Frontend interaction design and page implementation.',
     ],
   },
