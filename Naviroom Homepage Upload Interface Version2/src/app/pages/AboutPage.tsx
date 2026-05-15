@@ -33,19 +33,31 @@ const team = [
     name: 'Zhiwei Li',
     role: 'Team Leader',
     image: member1Image,
-    bio: 'Responsible for overall project coordination, system integration, and deployment workflow.',
+    bio: [
+      'Overall project coordination and milestone planning.',
+      'System integration across frontend, backend, and deployment.',
+      'Deployment workflow maintenance and production updates.',
+    ],
   },
   {
     name: 'Xinlu Li',
     role: 'Team Member',
     image: member2Image,
-    bio: 'Focused on recommendation modeling, semantic matching, and ranking pipeline design.',
+    bio: [
+      'Recommendation modeling and ranking logic design.',
+      'Semantic matching and requirement interpretation.',
+      'Evaluation of recommendation quality and result explanations.',
+    ],
   },
   {
     name: 'Xiangyi Li',
     role: 'Team Member',
     image: member3Image,
-    bio: 'Worked on data processing, NLP-based feature extraction, and frontend interaction design.',
+    bio: [
+      'Data processing pipeline and dataset normalization.',
+      'NLP-based room feature extraction from text descriptions.',
+      'Frontend interaction design and page implementation.',
+    ],
   },
 ];
 
@@ -169,7 +181,7 @@ export function AboutPage() {
           >
             The team
           </motion.h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {team.map((member, i) => (
               <motion.div
                 key={member.name}
@@ -177,43 +189,25 @@ export function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="bg-white rounded-3xl p-10 text-center"
+                className="bg-white rounded-3xl p-10"
               >
-                <div className="w-20 h-20 rounded-full bg-blue-100 mx-auto mb-6 flex items-center justify-center">
-                  <span className="text-blue-600 text-2xl">
-                    {member.name.charAt(0)}
-                  </span>
+                <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-6 border border-gray-200">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-xl mb-2">{member.name}</p>
-                <p className="text-base text-gray-500">{member.role}</p>
+                <p className="text-xl mb-2 text-center">{member.name}</p>
+                <p className="text-base text-blue-600 mb-5 text-center">{member.role}</p>
+                <ul className="space-y-3 text-sm text-gray-600 leading-6 list-disc pl-5">
+                  {member.bio.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-32 px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-6xl tracking-tight mb-8">Come build with us</h2>
-            <p className="text-2xl text-gray-600 mb-12 leading-relaxed">
-              We are always looking for thoughtful people who care about craft.
-            </p>
-            <Button
-              onClick={() => navigate('/signin')}
-              size="lg"
-              className="h-14 px-8 text-lg rounded-full"
-            >
-              Create an account
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </motion.div>
         </div>
       </section>
 
