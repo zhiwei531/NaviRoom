@@ -44,3 +44,20 @@ recommendation/auth_store.py
 # --- Docker ---
 docker/nginx/certs/
 .env
+
+# --- Documentation & Planning (local only) ---
+DOCKER_DEPLOY.md
+DEPLOYMENT_IMPROVEMENT_PLAN.md
+DEPLOYMENT_ARCHITECTURE.md
+MULTI_TENANT_ARCHITECTURE.md
+PUBLIC_DEPLOY_GUIDE.md
+
+# --- School assignments ---
+architecture_deployment_midterm_section.txt
+recommendation_midterm_report.txt
+
+# --- Legacy Ansible deployment (replaced by Docker) ---
+naviroom-deploy/
+
+# --- Legacy Figma-generated frontend (replaced by frontend/) ---
+"Naviroom Homepage Upload Interface Version2/"
