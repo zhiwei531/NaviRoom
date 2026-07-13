@@ -23,18 +23,6 @@ from datetime import datetime
 from pathlib import Path
 import argparse
 
-<<<<<<< HEAD
-try:
-    from .db_manager import DBManager
-    from .nlp_2_json_spacy import RoomParser
-except ImportError:
-    from db_manager import DBManager
-    from nlp_2_json_spacy import RoomParser
-
-
-# =====================================================
-=======
-
 
 # =====================================================
 # Room Parsing
@@ -52,13 +40,10 @@ def process_rooms(room_input):
     return rooms
 
 # =====================================================
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
 # Reservation Cleaning
 # =====================================================
 
 def load_reservations(path):
-<<<<<<< HEAD
-=======
     p = Path(path)
     suffix = p.suffix.lower()
 
@@ -71,15 +56,12 @@ def load_reservations(path):
         return data
 
     # Default: CSV
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
     with open(path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         return list(reader)
 
 
 def normalize_reservation(row):
-<<<<<<< HEAD
-=======
     # If the input is already in normalized JSON form, just validate/standardize keys.
     # Expected keys (example):
     # room_id, start_time, end_time, duration_minutes, status, request_date, description, ...
@@ -122,7 +104,6 @@ def normalize_reservation(row):
 
         return out
 
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
 
     time_formats = [
         "%Y-%m-%d %H:%M:%S",
@@ -173,21 +154,6 @@ def process_reservations(path):
     return [r for r in cleaned if r is not None]
 
 
-<<<<<<< HEAD
-# =====================================================
-# Room Parsing
-# =====================================================
-
-def process_rooms(room_input):
-
-    parser = RoomParser()
-
-    rooms = parser.parse(room_input)
-
-    return rooms
-=======
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
-
 
 # =====================================================
 # Pipeline
@@ -210,25 +176,12 @@ def run_pipeline(room_input=None, reservation_input=None, output="dataset.json",
     # 存储为json文件
     with open(output, "w", encoding="utf-8") as f:
         json.dump(dataset, f, indent=4)
-    
+
     # 存入MySQL数据库
     if save_to_db:
         if not db_password:
             print("Error: MySQL password is required when save_to_db is True.")
             return
-<<<<<<< HEAD
-
-        db = DBManager(password=db_password) 
-        
-        if "rooms" in dataset:
-            db.save_rooms(dataset["rooms"])
-        
-        if "reservations" in dataset:
-            # 只有房间存在时，存预约才有意义（因为有外键约束）
-            db.save_reservations(dataset["reservations"])
-            
-        db.close()
-=======
         # Lazy import so non-DB runs don't require mysql connector installed.
         try:
             from .db_manager import DBManager
@@ -244,8 +197,6 @@ def run_pipeline(room_input=None, reservation_input=None, output="dataset.json",
             db.save_reservations(dataset["reservations"])
 
         db.close()
-        
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
 
     print(f"Pipeline completed → {output}")
 
@@ -265,11 +216,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--reservations",
-<<<<<<< HEAD
-        help="Reservation csv file"
-=======
         help="Reservation file"
->>>>>>> 88c477409a75017699579a062b5e5fa884ee42d4
     )
 
     parser.add_argument(

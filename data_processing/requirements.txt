@@ -1,0 +1,9 @@
+pandas
+mysql-connector-python
+spacy
+openpyxl
+fastapi
+uvicorn
+openai
+python-dotenv
+python-multipart

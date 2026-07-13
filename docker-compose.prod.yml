@@ -1,0 +1,44 @@
+# ============================================================
+# NaviRoom 生产环境覆盖配置
+# 使用方式：docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================
+
+services:
+  mysql:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  api:
+    # 生产环境不直接暴露 API 端口（仅通过 nginx 访问）
+    ports: []
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    environment:
+      RECO_SEMANTIC_MODE: hybrid
+    # 安全加固
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    # 生产环境不直接暴露前端端口
+    ports: []
+
+  nginx:
+    # 生产环境总是启用 nginx
+    profiles: []
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 使用 Let's Encrypt 签发的正式证书
+      - /etc/letsencrypt/live/naviroom.cn/fullchain.pem:/etc/nginx/ssl/fullchain.crt:ro
+      - /etc/letsencrypt/live/naviroom.cn/privkey.pem:/etc/nginx/ssl/privkey.key:ro

@@ -1,0 +1,178 @@
+# ============================================================
+# NaviRoom Docker 编排
+# ============================================================
+
+services:
+  # ==================== MySQL 数据库 ====================
+  mysql:
+    image: mysql:8.0
+    container_name: naviroom-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      # 数据持久化
+      - mysql_data:/var/lib/mysql
+      # 初始化脚本（首次启动时自动执行 .sql / .sh 文件）
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - naviroom-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ==================== FastAPI 后端 ====================
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: naviroom-api
+    restart: unless-stopped
+    environment:
+      # 数据库连接
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # 推荐引擎配置
+      RECO_SEMANTIC_MODE: ${RECO_SEMANTIC_MODE:-hybrid}
+      RECO_REQUIREMENTS_MODE: ${RECO_REQUIREMENTS_MODE:-merge}
+      RECO_LLM_TOP_K: ${RECO_LLM_TOP_K:-8}
+      RECO_RECENCY_HALF_LIFE_DAYS: ${RECO_RECENCY_HALF_LIFE_DAYS:-30}
+      RECO_DATASET_PATH: ${RECO_DATASET_PATH:-Data_processing/output/dku_dataset.json}
+      # LLM API（DeepSeek）
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      # JWT 认证
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # 数据文件共享
+      - ./Data_processing/output:/app/Data_processing/output
+      - ./Data_processing/data:/app/Data_processing/data:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - naviroom-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ==================== 数据管道（一次性运行） ====================
+  data-pipeline:
+    build:
+      context: .
+      dockerfile: docker/data-pipeline/Dockerfile
+    container_name: naviroom-pipeline
+    # 仅在指定 profile 时运行
+    profiles:
+      - init
+      - pipeline
+    environment:
+      ROOMS_INPUT: ${PIPELINE_ROOMS:-Data_processing/data/dku_room_data/rooms.csv}
+      RESERVATIONS_INPUT: ${PIPELINE_RESERVATIONS:-}
+      OUTPUT_PATH: ${PIPELINE_OUTPUT:-Data_processing/output/dku_dataset.json}
+      SAVE_TO_DB: "${PIPELINE_SAVE_TO_DB:-false}"
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./Data_processing/output:/app/Data_processing/output
+      - ./Data_processing/data:/app/Data_processing/data:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - naviroom-network
+
+  # ==================== 前端 ====================
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: naviroom-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - naviroom-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ==================== Nginx 反向代理（生产环境） ====================
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: naviroom-nginx
+    restart: unless-stopped
+    profiles:
+      - production
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${TLS_CERT_DIR:-./docker/nginx/certs}:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - naviroom-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  naviroom-network:
+    driver: bridge
