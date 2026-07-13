@@ -4,6 +4,9 @@
 # ============================================================
 FROM python:3.11-slim-bookworm
 
+ARG PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ \
     && rm -rf /var/lib/apt/lists/*
@@ -11,7 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY Data_processing/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt && \
+RUN pip install --no-cache-dir \
+    -i ${PIP_INDEX} --trusted-host ${PIP_TRUSTED_HOST} \
+    -r /app/requirements.txt && \
+    pip install --no-cache-dir \
+    -i ${PIP_INDEX} --trusted-host ${PIP_TRUSTED_HOST} \
+    "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl" 2>/dev/null || \
     python -m spacy download en_core_web_sm
 
 COPY Data_processing/ /app/Data_processing/

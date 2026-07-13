@@ -1,0 +1,13 @@
+{
+    "registry-mirrors": [
+        "https://docker.1panel.live",
+        "https://dockerpull.org",
+        "https://docker.rainbond.cc"
+    ],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "50m",
+        "max-file": "3"
+    },
+    "storage-driver": "overlay2"
+}
