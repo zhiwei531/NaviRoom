@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY Data_processing/requirements.txt /app/requirements.txt
+COPY data_processing/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir \
     -i ${PIP_INDEX} --trusted-host ${PIP_TRUSTED_HOST} \
     -r /app/requirements.txt && \
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl" 2>/dev/null || \
     python -m spacy download en_core_web_sm
 
-COPY Data_processing/ /app/Data_processing/
+COPY data_processing/ /app/data_processing/
 
 VOLUME ["/app/Data_processing/output"]
 

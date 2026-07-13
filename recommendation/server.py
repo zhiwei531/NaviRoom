@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from recommendation.api import recommend_from_dataset_json, recommend_rooms_payload
 
-_scripts_dir = str(Path(__file__).resolve().parent.parent / "Data_processing" / "scripts")
+_scripts_dir = str(Path(__file__).resolve().parent.parent / "data_processing" / "scripts")
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
@@ -104,7 +104,7 @@ async def recommend_upload(
     # 最后回退到系统默认数据集
     if not rooms:
         dataset_path = os.getenv(
-            "RECO_DATASET_PATH", "Data_processing/output/dku_dataset.json"
+            "RECO_DATASET_PATH", "data_processing/output/dku_dataset.json"
         )
         try:
             dataset = _load_dataset(dataset_path)
@@ -144,7 +144,7 @@ def recommend_with_payload(req: PayloadRequest) -> list[dict[str, Any]]:
 @app.post("/recommend/dataset")
 def recommend_with_dataset(req: DatasetRequest) -> list[dict[str, Any]]:
     dataset_path = req.dataset_path or os.getenv(
-        "RECO_DATASET_PATH", "Data_processing/output/dku_dataset.json"
+        "RECO_DATASET_PATH", "data_processing/output/dku_dataset.json"
     )
     try:
         dataset = _load_dataset(dataset_path)

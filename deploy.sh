@@ -77,8 +77,8 @@ echo ""
 echo "=========================================="
 echo "  Step 3/4: 导入初始数据"
 echo "=========================================="
-if [ -f Data_processing/output/dku_dataset.json ]; then
-    echo "[SKIP] 数据集已存在: Data_processing/output/dku_dataset.json"
+if [ -f data_processing/output/dku_dataset.json ]; then
+    echo "[SKIP] 数据集已存在: data_processing/output/dku_dataset.json"
 else
     echo "[RUN] 运行数据管道..."
     docker compose --profile init run --rm data-pipeline

@@ -63,7 +63,7 @@ services:
       RECO_REQUIREMENTS_MODE: ${RECO_REQUIREMENTS_MODE:-merge}
       RECO_LLM_TOP_K: ${RECO_LLM_TOP_K:-8}
       RECO_RECENCY_HALF_LIFE_DAYS: ${RECO_RECENCY_HALF_LIFE_DAYS:-30}
-      RECO_DATASET_PATH: ${RECO_DATASET_PATH:-Data_processing/output/dku_dataset.json}
+      RECO_DATASET_PATH: ${RECO_DATASET_PATH:-data_processing/output/dku_dataset.json}
       # LLM API（DeepSeek）
       LLM_API_KEY: ${LLM_API_KEY:-}
       # JWT 认证
@@ -74,8 +74,8 @@ services:
       - "${API_PORT:-8000}:8000"
     volumes:
       # 数据文件共享
-      - ./Data_processing/output:/app/Data_processing/output
-      - ./Data_processing/data:/app/Data_processing/data:ro
+      - ./data_processing/output:/app/data_processing/output
+      - ./data_processing/data:/app/data_processing/data:ro
     depends_on:
       mysql:
         condition: service_healthy
@@ -110,14 +110,14 @@ services:
       - init
       - pipeline
     environment:
-      ROOMS_INPUT: ${PIPELINE_ROOMS:-Data_processing/data/dku_room_data/rooms.csv}
+      ROOMS_INPUT: ${PIPELINE_ROOMS:-data_processing/data/dku_room_data/rooms.csv}
       RESERVATIONS_INPUT: ${PIPELINE_RESERVATIONS:-}
-      OUTPUT_PATH: ${PIPELINE_OUTPUT:-Data_processing/output/dku_dataset.json}
+      OUTPUT_PATH: ${PIPELINE_OUTPUT:-data_processing/output/dku_dataset.json}
       SAVE_TO_DB: "${PIPELINE_SAVE_TO_DB:-false}"
       DB_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./Data_processing/output:/app/Data_processing/output
-      - ./Data_processing/data:/app/Data_processing/data:ro
+      - ./data_processing/output:/app/data_processing/output
+      - ./data_processing/data:/app/data_processing/data:ro
     depends_on:
       mysql:
         condition: service_healthy

@@ -8,12 +8,12 @@ echo "  NaviRoom Data Pipeline"
 echo "=========================================="
 
 # 默认值
-ROOMS_INPUT="${ROOMS_INPUT:-Data_processing/data/dku_room_data/rooms.csv}"
+ROOMS_INPUT="${ROOMS_INPUT:-data_processing/data/dku_room_data/rooms.csv}"
 RESERVATIONS_INPUT="${RESERVATIONS_INPUT:-}"
-OUTPUT_PATH="${OUTPUT_PATH:-Data_processing/output/dku_dataset.json}"
+OUTPUT_PATH="${OUTPUT_PATH:-data_processing/output/dku_dataset.json}"
 
 # 构建命令
-CMD="python Data_processing/scripts/pipeline.py"
+CMD="python data_processing/scripts/pipeline.py"
 CMD="$CMD --rooms ${ROOMS_INPUT}"
 CMD="$CMD --output ${OUTPUT_PATH}"
 

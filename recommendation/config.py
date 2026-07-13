@@ -28,10 +28,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _find_project_root() -> Path:
-    """向上查找项目根目录（包含 recommendation/ 和 Data_processing/ 的目录）"""
+    """向上查找项目根目录（包含 recommendation/ 和 data_processing/ 的目录）"""
     current = Path(__file__).resolve().parent
     for _ in range(5):
-        if (current / "recommendation").is_dir() and (current / "Data_processing").is_dir():
+        if (current / "recommendation").is_dir() and (current / "data_processing").is_dir():
             return current
         current = current.parent
     # Fallback: 返回当前文件的祖父目录
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
         description="行为评分时间衰减半衰期（天）",
     )
     reco_dataset_path: str = Field(
-        default="Data_processing/output/dku_dataset.json",
+        default="data_processing/output/dku_dataset.json",
         description="默认数据集路径",
     )
 
@@ -136,7 +136,7 @@ class Settings(BaseSettings):
 
     @property
     def data_processing_dir(self) -> Path:
-        return self.project_root / "Data_processing"
+        return self.project_root / "data_processing"
 
     @property
     def scripts_dir(self) -> Path:
