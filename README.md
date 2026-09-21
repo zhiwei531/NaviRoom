@@ -10,6 +10,7 @@ NaviRoom is an intelligent room reservation prototype focused on three problems:
 
 - `data_processing/`: data cleaning, schema normalization, and dataset generation.
 - `recommendation/`: room recommendation engine and Python-facing API wrappers.
+- `demand_forecasting/`: reproducible DKU room-by-slot demand forecasting experiments.
 - `frontend/`: current UI prototype.
 - `deploy/`: deployment-related configuration.
 

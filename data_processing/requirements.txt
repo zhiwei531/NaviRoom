@@ -2,6 +2,8 @@ pandas
 mysql-connector-python
 spacy
 openpyxl
+scikit-learn>=1.2
+joblib>=1.2
 fastapi
 uvicorn
 openai

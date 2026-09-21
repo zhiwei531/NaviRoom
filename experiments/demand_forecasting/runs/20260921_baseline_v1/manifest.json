@@ -1,0 +1,118 @@
+{
+  "created_at_utc": "2026-09-21T07:05:47.152505+00:00",
+  "features": [
+    "room_id",
+    "room_type",
+    "floor",
+    "capacity",
+    "has_screen",
+    "has_whiteboard",
+    "metadata_inferred",
+    "slot_minute",
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "lag_1d",
+    "lag_7d",
+    "recent_7d_rate",
+    "recent_28d_rate",
+    "same_weekday_4w_rate"
+  ],
+  "git_commit_before_run": "6042db8cd8dc5055cb145d6d053f286836e81fa0",
+  "model_selection_metric": "validation log_loss (lower is better)",
+  "pandas": "2.2.3",
+  "python": "3.12.14",
+  "rows": {
+    "test": 40500,
+    "train": 251100,
+    "train_validation": 291600,
+    "validation": 40500
+  },
+  "run_name": "20260921_baseline_v1",
+  "scikit_learn": "1.9.1",
+  "selected_model": "logistic_regression",
+  "split": {
+    "test_end": "2026-03-24",
+    "test_start": "2026-02-08",
+    "train_end": "2025-12-24",
+    "train_start": "2025-03-21",
+    "validation_end": "2026-02-07",
+    "validation_start": "2025-12-25"
+  },
+  "status_interpretation": "The source has no outcome status; rows are treated as recorded reservations, not verified attendance.",
+  "target": "occupied in a room x 30-minute slot",
+  "test_metrics": {
+    "hist_gradient_boosting": {
+      "accuracy_at_0_5": 0.8842716049382716,
+      "average_precision": 0.4631486671376013,
+      "brier_score": 0.08731414300620123,
+      "log_loss": 0.29108605473729754,
+      "observed_rate": 0.12469135802469136,
+      "peak_log_loss": 0.3470508518076495,
+      "peak_roc_auc": 0.8102084584944931,
+      "predicted_rate": 0.14840555431754063,
+      "roc_auc": 0.8308667150777137
+    },
+    "historical_mean": {
+      "accuracy_at_0_5": 0.8753086419753087,
+      "average_precision": 0.24787084726080583,
+      "brier_score": 0.10199298899724449,
+      "log_loss": 0.35781625471746603,
+      "observed_rate": 0.12469135802469136,
+      "peak_log_loss": 0.41724891887125964,
+      "peak_roc_auc": 0.6904137405966687,
+      "predicted_rate": 0.13894554834037984,
+      "roc_auc": 0.7240558728651425
+    },
+    "logistic_regression": {
+      "accuracy_at_0_5": 0.8826666666666667,
+      "average_precision": 0.46121573735820526,
+      "brier_score": 0.0888473825678162,
+      "log_loss": 0.2999822129923201,
+      "observed_rate": 0.12469135802469136,
+      "peak_log_loss": 0.3565505703921738,
+      "peak_roc_auc": 0.7954110765497852,
+      "predicted_rate": 0.1510057822095624,
+      "roc_auc": 0.8164726836012234
+    }
+  },
+  "validation_metrics": {
+    "hist_gradient_boosting": {
+      "accuracy_at_0_5": 0.7887901234567901,
+      "average_precision": 0.5144996137499798,
+      "brier_score": 0.16145404559031723,
+      "log_loss": 0.533490987217348,
+      "observed_rate": 0.214,
+      "peak_log_loss": 0.5890962327389684,
+      "peak_roc_auc": 0.7901807130015712,
+      "predicted_rate": 0.0777060755780386,
+      "roc_auc": 0.7965896706864587
+    },
+    "historical_mean": {
+      "accuracy_at_0_5": 0.786,
+      "average_precision": 0.3500566295786665,
+      "brier_score": 0.16316059309506917,
+      "log_loss": 0.5437337812973135,
+      "observed_rate": 0.214,
+      "peak_log_loss": 0.5939379670374372,
+      "peak_roc_auc": 0.6663555508297488,
+      "predicted_rate": 0.12474335244507756,
+      "roc_auc": 0.699718825107279
+    },
+    "logistic_regression": {
+      "accuracy_at_0_5": 0.7954074074074075,
+      "average_precision": 0.5038265130566871,
+      "brier_score": 0.15656839610735326,
+      "log_loss": 0.5148274640411149,
+      "observed_rate": 0.214,
+      "peak_log_loss": 0.5885355610722278,
+      "peak_roc_auc": 0.7602814561117825,
+      "predicted_rate": 0.09362172397332108,
+      "roc_auc": 0.7729807561862367
+    }
+  }
+}

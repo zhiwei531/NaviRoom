@@ -37,6 +37,7 @@ Thumbs.db
 *.zip
 output.json
 output_kaggle_rooms.json
+artifacts/demand_forecasting/
 
 # --- Unused auth module (replaced by public API) ---
 recommendation/auth_store.py
