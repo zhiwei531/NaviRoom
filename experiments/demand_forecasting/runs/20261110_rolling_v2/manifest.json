@@ -1,0 +1,28 @@
+{
+  "source": {
+    "raw_rows": 8751,
+    "target_rows": 8451,
+    "room_count": 30,
+    "start_min": "2025-03-21T12:00:00",
+    "start_max": "2026-03-24T11:30:00",
+    "request_min": "2025-03-20T17:26:11",
+    "request_max": "2026-03-18T19:42:38",
+    "same_window_duplicate_rows": 12,
+    "inferred_room_ids": [
+      "R2008"
+    ],
+    "source_has_real_status": false,
+    "workbook_sha256": "31e15c3a774af5e946b98842ec10c6ad88701f5af515c382f3724f821714f5bc",
+    "rooms_sha256": "8c336451e3e2d77965897f34a75058d6848f35484a0bc56a36cebfde574ebde5"
+  },
+  "git_commit": "da9c2a207867f362e7843878a16df3be62e55023",
+  "protocol": "Weights fixed each month; lag features refreshed daily at midnight. Not a month-ahead forecast.",
+  "cutoff_exclusive": "2026-03-18 00:00:00",
+  "model_selection": "None; exploratory historical backtest, overlaps prior v1 holdout.",
+  "assumptions": [
+    "08:00\u201323:00 analysis window is not verified opening hours",
+    "No-record days treated as zero recorded bookings; export completeness unverified",
+    "Reservation coverage is not attendance",
+    "Static room metadata; historical validity unverified"
+  ]
+}
