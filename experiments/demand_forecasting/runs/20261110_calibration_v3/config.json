@@ -1,0 +1,9 @@
+{
+  "half_life_days": 30,
+  "prior_strength": 5,
+  "calibration_days": 28,
+  "protocol": "Monthly weights, daily midnight lag updates; chronological 28-day calibration, base model frozen after calibration.",
+  "evaluation": "Exploratory reuse of six historical windows; no untouched holdout and no deployment.",
+  "python": "3.13.1 (v3.13.1:06714517797, Dec  3 2024, 14:00:22) [Clang 15.0.0 (clang-1500.3.9.4)]",
+  "commit": "7614792249962598fc3cf03bf89e4dcc270cae2f"
+}
