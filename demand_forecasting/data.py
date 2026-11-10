@@ -181,9 +181,7 @@ def build_slot_panel(reservations: pd.DataFrame, rooms: pd.DataFrame) -> pd.Data
     panel["lag_7d"] = groups.shift(7)
     panel["recent_7d_rate"] = groups.transform(lambda values: values.shift(1).rolling(7, min_periods=1).mean())
     panel["recent_28d_rate"] = groups.transform(lambda values: values.shift(1).rolling(28, min_periods=1).mean())
-    panel["same_weekday_4w_rate"] = groups.transform(
-        lambda values: values.shift(7).rolling(22, min_periods=1).apply(
-            lambda window: window.iloc[::7].mean(), raw=False
-        )
-    )
+    panel["same_weekday_4w_rate"] = pd.concat(
+        [groups.shift(days) for days in (7, 14, 21, 28)], axis=1
+    ).mean(axis=1)
     return panel.sort_values(["date", "room_id", "slot_minute"]).reset_index(drop=True)
