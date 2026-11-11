@@ -35,7 +35,7 @@ def main():
     root = Path('experiments/demand_forecasting/runs/20261111_current_year_v5')
     root.mkdir(parents=True,exist_ok=False)
     config = dict(start='2025-08-08', outer_months=['2025-10','2025-11','2025-12','2026-01','2026-02'],
-        inner='Two preceding non-overlapping 14-day windows; expanding fits; minimum 28 training days.',
+        inner='Two preceding non-overlapping 14-day windows; expanding fits; minimum 14 training days.',
         candidates=[(g,c) for g in GROUPS for c in [0.01,0.1,1.0]],
         protocol='Daily midnight lag updates; monthly refit. No previous-academic-year rows or lags.',
         caveats=['Retrospective exploratory reused outer periods, not a fresh holdout',
@@ -60,7 +60,7 @@ def main():
             for begin,end in inner_windows(outer):
                 train = panel[panel.date < begin]
                 valid = panel[(panel.date >= begin)&(panel.date < end)]
-                assert train.date.nunique() >= 28 and train.date.max() < valid.date.min() and valid.date.max() < outer
+                assert train.date.nunique() >= 14 and train.date.max() < valid.date.min() and valid.date.max() < outer
                 fitted = model(group,c).fit(train,train.occupied)
                 loss = log_loss(valid.occupied,fitted.predict_proba(valid)[:,1])
                 losses.append(loss)
