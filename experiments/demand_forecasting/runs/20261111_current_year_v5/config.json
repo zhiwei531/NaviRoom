@@ -1,0 +1,44 @@
+{
+  "start": "2025-08-08",
+  "outer_months": [
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02"
+  ],
+  "inner": "Two preceding non-overlapping 14-day windows; expanding fits; minimum 14 training days.",
+  "candidates": [
+    [
+      "base",
+      0.01
+    ],
+    [
+      "base",
+      0.1
+    ],
+    [
+      "base",
+      1.0
+    ],
+    [
+      "compact_calendar",
+      0.01
+    ],
+    [
+      "compact_calendar",
+      0.1
+    ],
+    [
+      "compact_calendar",
+      1.0
+    ]
+  ],
+  "protocol": "Daily midnight lag updates; monthly refit. No previous-academic-year rows or lags.",
+  "caveats": [
+    "Retrospective exploratory reused outer periods, not a fresh holdout",
+    "Opening hours and export completeness remain unverified; bookings are not attendance",
+    "Calendar version provenance and unknown equipment assumptions inherited from v4"
+  ],
+  "commit": "69c06408a0283a58e795ea3e7dde7d2ea5eeab8f"
+}
