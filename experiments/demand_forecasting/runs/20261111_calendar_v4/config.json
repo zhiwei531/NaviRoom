@@ -1,0 +1,18 @@
+{
+  "calendar_file": "DKU-Acdemic-Calendar-2025-2026_250919_v2-2.pdf",
+  "calendar_sha256": "57f53365c925cf40d25c6173f8064fc1110bac9f6c578069952ad6a6026c9807",
+  "printed_revision": "March 3, 2025",
+  "pages": [
+    1,
+    2
+  ],
+  "source_commit": "dac4565fe29674a4feae153a9410aa6d741c316b",
+  "protocol": "Paired monthly expanding-window fits, daily midnight feature updates; fixed parameters; exploratory reused windows.",
+  "caveats": [
+    "Calendar version availability at historical decision dates unverified",
+    "Pre-August dates have unknown calendar; not labelled as holidays",
+    "No class and residence closure do not mean library closure",
+    "Static metadata and complete-export assumptions inherited from v2"
+  ],
+  "python": "3.13.1 (v3.13.1:06714517797, Dec  3 2024, 14:00:22) [Clang 15.0.0 (clang-1500.3.9.4)]"
+}

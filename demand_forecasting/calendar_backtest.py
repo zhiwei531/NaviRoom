@@ -1,5 +1,6 @@
 """Paired calendar ablation with identical daily-origin rolling evaluation."""
 import json
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -15,9 +16,13 @@ from .calendar_features import add_calendar, CALENDAR_COLUMNS
 
 
 def main():
-    root = Path('experiments/demand_forecasting/runs/20261111_calendar_v4')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--calendar', required=True, type=Path)
+    parser.add_argument('--run-name', default='20261111_calendar_v4')
+    args = parser.parse_args()
+    root = Path('experiments/demand_forecasting/runs') / args.run_name
     root.mkdir(parents=True, exist_ok=False)
-    source = Path('/Users/lizhiwei/Downloads/DKU-Acdemic-Calendar-2025-2026_250919_v2-2.pdf')
+    source = args.calendar
     config = dict(calendar_file=source.name, calendar_sha256=file_sha256(source), printed_revision='March 3, 2025',
         pages=[1,2], source_commit=subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
         protocol='Paired monthly expanding-window fits, daily midnight feature updates; fixed parameters; exploratory reused windows.',
