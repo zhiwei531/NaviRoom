@@ -1,5 +1,6 @@
 """Current-year-only nested temporal model selection."""
 import json
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -32,11 +33,16 @@ def inner_windows(outer):
 
 
 def main():
-    root = Path('experiments/demand_forecasting/runs/20261111_current_year_v5')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--run-name', default='20261111_current_year_v5')
+    parser.add_argument('--select-window', action='store_true')
+    args = parser.parse_args()
+    root = Path('experiments/demand_forecasting/runs') / args.run_name
     root.mkdir(parents=True,exist_ok=False)
     config = dict(start='2025-08-08', outer_months=['2025-10','2025-11','2025-12','2026-01','2026-02'],
         inner='Two preceding non-overlapping 14-day windows; expanding fits; minimum 14 training days.',
-        candidates=[(g,c) for g in GROUPS for c in [0.01,0.1,1.0]],
+        candidates=[(g,c,w) for g in GROUPS for c in [0.01,0.1,1.0] for w in ([0,42] if args.select_window else [0])],
+        window_definition='0 = all current-year history; 42 = preceding 42 calendar days; lags retain available prior current-year history',
         protocol='Daily midnight lag updates; monthly refit. No previous-academic-year rows or lags.',
         caveats=['Retrospective exploratory reused outer periods, not a fresh holdout',
                  'Opening hours and export completeness remain unverified; bookings are not attendance',
@@ -55,23 +61,27 @@ def main():
     rows, inner, selections = [], [], []
     for outer in pd.to_datetime([m+'-01' for m in config['outer_months']]):
         scores = []
-        for group,c in config['candidates']:
+        for group,c,window in config['candidates']:
             losses = []
             for begin,end in inner_windows(outer):
                 train = panel[panel.date < begin]
+                if window:
+                    train = train[train.date >= begin-pd.Timedelta(days=window)]
                 valid = panel[(panel.date >= begin)&(panel.date < end)]
                 assert train.date.nunique() >= 14 and train.date.max() < valid.date.min() and valid.date.max() < outer
                 fitted = model(group,c).fit(train,train.occupied)
                 loss = log_loss(valid.occupied,fitted.predict_proba(valid)[:,1])
                 losses.append(loss)
-                inner.append(dict(outer=str(outer.date()),group=group,C=c,start=str(begin.date()),end_exclusive=str(end.date()),log_loss=loss))
-            scores.append((sum(losses)/len(losses),group,c))
-        _,group,c = min(scores)
-        selections.append(dict(month=str(outer.date()),group=group,C=c,inner_log_loss=min(scores)[0]))
+                inner.append(dict(outer=str(outer.date()),group=group,C=c,window_days=window,start=str(begin.date()),end_exclusive=str(end.date()),log_loss=loss))
+            scores.append((sum(losses)/len(losses),group,c,window))
+        _,group,c,window = min(scores)
+        _,old_group,old_c,_ = min(score for score in scores if score[3] == 0)
+        selections.append(dict(month=str(outer.date()),group=group,C=c,window_days=window,inner_log_loss=min(scores)[0]))
         train = panel[panel.date < outer]
         test = panel[(panel.date >= outer)&(panel.date < outer+pd.offsets.MonthBegin())]
-        for name,g,regularization in [('base', 'base',1.0),('selected',group,c)]:
-            fitted = model(g,regularization).fit(train,train.occupied)
+        for name,g,regularization,w in [('base','base',1.0,0),('selected',group,c,window),('expanding_selected',old_group,old_c,0)]:
+            fit = train if w == 0 else train[train.date >= outer-pd.Timedelta(days=w)]
+            fitted = model(g,regularization).fit(fit,fit.occupied)
             p = fitted.predict_proba(test)[:,1]
             rows.append(dict(month=str(outer.date()),model=name,**_metrics(test.occupied,p,test.slot_minute)))
         for filename,data in [('metrics',rows),('inner_scores',inner),('selections',selections)]:
